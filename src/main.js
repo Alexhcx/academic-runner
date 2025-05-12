@@ -8,8 +8,8 @@ import characterSelect from "./scenes/characterSelect"
 // Add this global variable at the top of the file, after the imports
 let citySfx = null
 
-// Carregando sprites dos personagens
-k.loadSprite("chemical-bg", "graphics/chemical-bg.png")
+// Carrega sprites dos personagens
+k.loadSprite("fase01", "graphics/fase01.png")
 k.loadSprite("platforms", "graphics/platforms.png")
 
 // Gleisla
@@ -22,7 +22,7 @@ k.loadSprite("gleisla", "graphics/gleisla.png", {
   },
 })
 
-// Tails (usando o mesmo sprite de Sonic temporariamente)
+// Nicoly
 k.loadSprite("nicoly", "graphics/nicoly.png", {
   sliceX: 8,
   sliceY: 2,
@@ -32,8 +32,8 @@ k.loadSprite("nicoly", "graphics/nicoly.png", {
   },
 })
 
-// Knuckles (usando o mesmo sprite de Sonic temporariamente)
-k.loadSprite("knuckles", "graphics/sonic.png", {
+// Alexandre
+k.loadSprite("alexandre", "graphics/alexandre.png", {
   sliceX: 8,
   sliceY: 2,
   anims: {
@@ -42,8 +42,8 @@ k.loadSprite("knuckles", "graphics/sonic.png", {
   },
 })
 
-// Amy (usando o mesmo sprite de Sonic temporariamente)
-k.loadSprite("amy", "graphics/sonic.png", {
+// Edvaldo
+k.loadSprite("edvaldo", "graphics/edvaldo.png", {
   sliceX: 8,
   sliceY: 2,
   anims: {
@@ -52,8 +52,8 @@ k.loadSprite("amy", "graphics/sonic.png", {
   },
 })
 
-// Shadow (usando o mesmo sprite de Sonic temporariamente)
-k.loadSprite("shadow", "graphics/sonic.png", {
+// Alberto
+k.loadSprite("alberto", "graphics/alberto.png", {
   sliceX: 8,
   sliceY: 2,
   anims: {
@@ -62,13 +62,26 @@ k.loadSprite("shadow", "graphics/sonic.png", {
   },
 })
 
-k.loadSprite("ring", "graphics/ring.png", {
-  sliceX: 3,
-  sliceY: 1,
-  anims: {
-    spin: { from: 0, to: 2, loop: true, speed: 10 },
-  },
-})
+// Carregando sprites das notas (0 a 10)
+for (let i = 0; i <= 10; i++) {
+  k.loadSprite(`note${i}`, `graphics/notas/nota${i}.png`,{
+    sliceX: 3,
+    sliceY: 1,
+    anims: {
+      spin: { from: 0, to: 2, loop: true, speed: 10 },
+      },
+  })
+}
+
+// logica e o sprite do ring não está mais sendo usado.
+// k.loadSprite("ring", "graphics/ring.png", {
+//   sliceX: 3,
+//   sliceY: 1,
+//   anims: {
+//     spin: { from: 0, to: 2, loop: true, speed: 10 },
+//   },
+// })
+
 k.loadSprite("motobug", "graphics/motobug.png", {
   sliceX: 5,
   sliceY: 1,
@@ -84,14 +97,14 @@ k.loadSound("jump", "sounds/Jump.wav")
 k.loadSound("ring", "sounds/Ring.wav")
 k.loadSound("city", "sounds/city.mp3")
 
-// Registrando as cenas
+// Registra as cenas
 k.scene("disclaimer", disclaimer)
 k.scene("main-menu", mainMenu)
 k.scene("character-select", characterSelect)
 k.scene("game", game)
 k.scene("gameover", gameover)
 
-// Definir personagem padrão
+// Define personagem padrão
 if (!k.getData("selected-character")) {
   k.setData("selected-character", "gleisla")
 }
