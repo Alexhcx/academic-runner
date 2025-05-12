@@ -16,12 +16,30 @@ export default function characterSelect() {
   // Flag para controlar se o botão de pulo deve iniciar o jogo
   let allowJumpToStart = false
 
-  // Fundo
-  const bgPieceWidth = 1920
-  const bgPieces = [
-    k.add([k.sprite("chemical-bg"), k.pos(0, 0), k.scale(2), k.opacity(0.8)]),
-    k.add([k.sprite("chemical-bg"), k.pos(1920, 0), k.scale(2), k.opacity(0.8)]),
+  // --- Background Logic ---
+  const bgY = -26
+  const bgOpacity = 0.8
+  const bgScale = 2
+  const backgroundSpeed = 100 // Speed for background movement
+
+  // Add the first background piece to get its actual width (scaled)
+  const bg1 = k.add([k.sprite("fase01"), k.pos(0, bgY), k.scale(bgScale), k.opacity(bgOpacity)])
+  const actualBgWidth = bg1.width + 5720
+
+  // Add the second background piece, positioned to the right of the first
+  const bg2 = k.add([k.sprite("fase01"), k.pos(actualBgWidth, bgY), k.scale(bgScale), k.opacity(bgOpacity)])
+
+  // Array to manage background pieces
+  const backgroundPieces = [bg1, bg2]
+  // --- End of Background Logic ---
+
+  // --- Platform Logic ---
+  const platformLoopSpeed = 200
+  const platforms = [
+    k.add([k.sprite("platforms"), k.pos(0, 450), k.scale(4)]),
+    k.add([k.sprite("platforms"), k.pos(384, 450), k.scale(4)]),
   ]
+  // --- End of Platform Logic ---
 
   // Título
   k.add([k.text("SELECIONE SEU PERSONAGEM", { font: "mania", size: 72 }), k.anchor("center"), k.pos(k.center().x, 150)])
@@ -124,7 +142,7 @@ export default function characterSelect() {
     k.play("ring", { volume: 0.3 })
   })
 
-  // Cancelar o evento de pulo padrão para evitar iniciar o jogo ao clicar
+  // Cancela o evento de pulo padrão para evitar iniciar o jogo ao clicar
   const jumpAction = k.onButtonPress("jump", () => {
     if (allowJumpToStart) {
       selectCharacter()
@@ -191,14 +209,35 @@ export default function characterSelect() {
     k.go("game")
   }
 
-  // Animação do fundo
+  // Animation for background and platforms
   k.onUpdate(() => {
-    if (bgPieces[1].pos.x < 0) {
-      bgPieces[0].moveTo(bgPieces[1].pos.x + bgPieceWidth * 2, 0)
-      bgPieces.push(bgPieces.shift())
-    }
+    // --- Background Loop ---
+    for (const bg of backgroundPieces) {
+      bg.move(-backgroundSpeed, 0)
 
-    bgPieces[0].move(-100, 0)
-    bgPieces[1].moveTo(bgPieces[0].pos.x + bgPieceWidth * 2, 0)
+      if (bg.pos.x + actualBgWidth <= 0) {
+        // Find the rightmost background piece
+        let rightmostX = Number.NEGATIVE_INFINITY
+        for (const otherBg of backgroundPieces) {
+          if (otherBg !== bg && otherBg.pos.x > rightmostX) {
+            rightmostX = otherBg.pos.x
+          }
+        }
+        bg.pos.x = rightmostX + actualBgWidth
+      }
+    }
+    // --- End of Background Loop ---
+
+    // --- Platform Loop ---
+    const platformVisualWidth = platforms[0].width
+
+    platforms[0].move(-platformLoopSpeed, 0)
+    platforms[1].moveTo(platforms[0].pos.x + platformVisualWidth, 450)
+
+    if (platforms[0].pos.x + platformVisualWidth < 0) {
+      platforms[0].pos.x = platforms[1].pos.x + platformVisualWidth
+      platforms.push(platforms.shift())
+    }
+    // --- End of Platform Loop ---
   })
 }

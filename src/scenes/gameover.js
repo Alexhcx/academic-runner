@@ -7,17 +7,18 @@ export default function gameover() {
   let bestScore = k.getData("best-score")
   const currentScore = k.getData("current-score")
 
+  // Ajustando os valores de rank para o sistema de média (0-10)
   const rankGrades = ["F", "E", "D", "C", "B", "A", "S"]
-  const rankValues = [50, 80, 100, 200, 300, 400, 500]
+  const rankValues = [2, 4, 6, 7, 8, 9, 10] // Ajustado para o sistema de média
 
   let currentRank = "F"
   let bestRank = "F"
   for (let i = 0; i < rankValues.length; i++) {
-    if (rankValues[i] < currentScore) {
+    if (currentScore >= rankValues[i]) {
       currentRank = rankGrades[i]
     }
 
-    if (rankValues[i] < bestScore) {
+    if (bestScore >= rankValues[i]) {
       bestRank = rankGrades[i]
     }
   }
@@ -58,17 +59,27 @@ export default function gameover() {
     // We don't pause the music when going back to the menu
   })
 
-  k.add([k.text("REPROVADO", { font: "mania", size: 96 }), k.anchor("center"), k.pos(k.center().x, k.center().y - 300)])
+  // Determina se o jogador foi aprovado ou reprovado com base na média
+  const isApproved = currentScore >= 6.0 // Aprovado se a média for 6.0 ou maior
+
   k.add([
-    k.text(`MELHOR NOTA : ${bestScore}`, {
+    k.text(isApproved ? "APROVADO!" : "REPROVADO", { font: "mania", size: 96 }),
+    k.anchor("center"),
+    k.pos(k.center().x, k.center().y - 300),
+    k.color(isApproved ? k.Color.fromArray([0, 255, 0]) : k.Color.fromArray([255, 0, 0])),
+  ])
+
+  k.add([
+    k.text(`MELHOR MÉDIA: ${bestScore.toFixed(1)}`, {
       font: "mania",
       size: 64,
     }),
     k.anchor("center"),
     k.pos(k.center().x - 400, k.center().y - 200),
   ])
+
   k.add([
-    k.text(`NOTA ATUAL : ${currentScore}`, {
+    k.text(`MÉDIA ATUAL: ${currentScore.toFixed(1)}`, {
       font: "mania",
       size: 64,
     }),
