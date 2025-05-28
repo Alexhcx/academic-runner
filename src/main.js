@@ -10,7 +10,9 @@ let citySfx = null
 
 // Carrega sprites dos personagens
 k.loadSprite("fase01", "graphics/fase01.png")
+k.loadSprite("fase02", "graphics/fase02.png")
 k.loadSprite("platforms", "graphics/platforms.png")
+k.loadSprite("platforms02", "graphics/platforms02.png")
 
 // Gleisla
 k.loadSprite("gleisla", "graphics/gleisla.png", {

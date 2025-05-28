@@ -6,6 +6,7 @@ export function makePlayer(pos, characterId = "gleisla") {
     k.scale(4),
     k.area(),
     k.anchor("center"),
+    k.opacity(1),
     k.pos(pos),
     k.body({ jumpForce: 1700 }),
     {
