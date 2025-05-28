@@ -62,7 +62,7 @@ export default function mainMenu() {
     "clickable",
   ])
 
-  selectCharButton.add([k.text("SELECIONAR PERSONAGEM", { font: "mania", size: 48 }), k.anchor("center"), k.pos(0, 0)])
+  selectCharButton.add([k.text("SELECIONAR PERSONAGEM", { font: "mania", size: 48 }), k.anchor("center"), k.pos(0, 4)])
 
   // Eventos de clique
   playButton.onClick(() => {

@@ -2,6 +2,8 @@ import k from "../kaplayCtx"
 import { makePlayer } from "../entities/player"
 import { makeMotobug } from "../entities/motobug"
 import { makeNote } from "../entities/note"
+import { makeTextShadow } from "../scenes/components/textBackgroundShadow"
+import { makeGameControls } from "../scenes/components/gameControls"
 
 export default function game() {
   const citySfx = window.gameSoundtrack
@@ -31,15 +33,16 @@ export default function game() {
   
   let currentStageIndex = 0
   let stageRepeatCount = 0
-  const maxRepeatsPerStage = 1
+  const maxRepeatsPerStage = 3
 
   // Variáveis para controle do fade
   let isTransitioning = false
 
-  // Arrays para gerenciar as peças (serão recriados a cada transição)
+  // Arrays para gerenciar as peças
   let backgroundPieces = []
   let platforms = []
   let actualBgWidth = 0
+  let actualPlatformWidth = 0
 
   // CORREÇÃO 1: Criar player primeiro e garantir Z-index alto
   const selectedCharacter = k.getData("selected-character") || "gleisla"
@@ -50,6 +53,9 @@ export default function game() {
 
   player.setControls()
   player.setEvents()
+
+  const gameControls = makeGameControls()
+  gameControls.init()
 
   // VARIÁVEL CRÍTICA: Salvar referência original da opacidade do player
   let playerOriginalOpacity = 1
@@ -63,7 +69,7 @@ export default function game() {
   // Função para obter o cenário atual
   const getCurrentStage = () => stages[currentStageIndex]
 
-  // CORREÇÃO 2: Função melhorada para criar elementos do cenário
+  // CORREÇÃO PRINCIPAL: Função melhorada para criar elementos com sincronização perfeita
   const createSceneryElements = (isInitial = false) => {
     // Pausar temporariamente a atualização do player durante a recriação
     const wasPlayerFrozen = player.paused || false
@@ -84,7 +90,6 @@ export default function game() {
     // Aguardar um frame para garantir que a destruição foi processada
     k.wait(0, () => {
       // Criar novos elementos do background com Z-index baixo
-      // Se for inicial, começar visível; se for transição, começar invisível
       const initialOpacity = isInitial ? bgOpacity : 0
       
       const bg1 = k.add([
@@ -92,7 +97,7 @@ export default function game() {
         k.pos(0, bgY),
         k.scale(bgScale),
         k.opacity(initialOpacity),
-        k.z(-100), // Z-index baixo para ficar atrás
+        k.z(-100),
         "background_piece",
       ])
       
@@ -103,14 +108,13 @@ export default function game() {
         k.pos(actualBgWidth, bgY),
         k.scale(bgScale),
         k.opacity(initialOpacity),
-        k.z(-100), // Z-index baixo para ficar atrás
+        k.z(-100),
         "background_piece",
       ])
 
       backgroundPieces = [bg1, bg2]
 
-      // Criar novas plataformas visuais com Z-index médio
-      // Se for inicial, começar visível; se for transição, começar invisível
+      // CORREÇÃO: Criar plataformas com a MESMA lógica de posicionamento do background
       const platformInitialOpacity = isInitial ? 1 : 0
       
       const platform1 = k.add([
@@ -118,15 +122,18 @@ export default function game() {
         k.pos(0, 450), 
         k.scale(4), 
         k.opacity(platformInitialOpacity),
-        k.z(-50), // Z-index médio
+        k.z(-50),
       ])
+      
+      // IMPORTANTE: Usar a mesma largura calculada do background
+      actualPlatformWidth = actualBgWidth // Mesmo valor que o background
       
       const platform2 = k.add([
         k.sprite(getCurrentStage().platform), 
-        k.pos(384, 450), 
+        k.pos(actualPlatformWidth, 450), // Usar a mesma largura do background
         k.scale(4), 
         k.opacity(platformInitialOpacity),
-        k.z(-50), // Z-index médio
+        k.z(-50),
       ])
 
       platforms = [platform1, platform2]
@@ -134,7 +141,76 @@ export default function game() {
       // Reconfirmar Z-index do player após criar novos elementos
       player.z = 1000
       
+      console.log(`Elementos criados - BG Width: ${actualBgWidth}, Platform Width: ${actualPlatformWidth}`)
       console.log(`Elementos do cenário ${isInitial ? 'iniciais' : 'recriados'} para: ${getCurrentStage().name}`)
+    })
+  }
+
+  // NOVA FUNÇÃO: Criar elementos sem fade (para repetições)
+  const createSceneryElementsWithoutFade = () => {
+    // Destruir elementos antigos se existirem
+    backgroundPieces.forEach(bg => {
+      if (bg && bg.exists()) {
+        k.destroy(bg)
+      }
+    })
+    
+    platforms.forEach(platform => {
+      if (platform && platform.exists()) {
+        k.destroy(platform)
+      }
+    })
+
+    // Aguardar um frame para garantir que a destruição foi processada
+    k.wait(0, () => {
+      // Criar novos elementos do background com OPACIDADE TOTAL (sem fade)
+      const bg1 = k.add([
+        k.sprite(getCurrentStage().bg),
+        k.pos(0, bgY),
+        k.scale(bgScale),
+        k.opacity(bgOpacity), // Opacidade total desde o início
+        k.z(-100),
+        "background_piece",
+      ])
+      
+      actualBgWidth = bg1.width + 5720
+
+      const bg2 = k.add([
+        k.sprite(getCurrentStage().bg),
+        k.pos(actualBgWidth, bgY),
+        k.scale(bgScale),
+        k.opacity(bgOpacity), // Opacidade total desde o início
+        k.z(-100),
+        "background_piece",
+      ])
+
+      backgroundPieces = [bg1, bg2]
+
+      // Criar plataformas com OPACIDADE TOTAL (sem fade)
+      const platform1 = k.add([
+        k.sprite(getCurrentStage().platform), 
+        k.pos(0, 450), 
+        k.scale(4), 
+        k.opacity(1), // Opacidade total desde o início
+        k.z(-50),
+      ])
+      
+      actualPlatformWidth = actualBgWidth
+      
+      const platform2 = k.add([
+        k.sprite(getCurrentStage().platform), 
+        k.pos(actualPlatformWidth, 450),
+        k.scale(4), 
+        k.opacity(1), // Opacidade total desde o início
+        k.z(-50),
+      ])
+
+      platforms = [platform1, platform2]
+      
+      // Reconfirmar Z-index do player após criar novos elementos
+      player.z = 1000
+      
+      console.log(`Elementos recriados SEM FADE - BG Width: ${actualBgWidth}, Platform Width: ${actualPlatformWidth}`)
     })
   }
 
@@ -169,7 +245,6 @@ export default function game() {
       // Fade out APENAS dos backgrounds específicos
       backgroundPieces.forEach((bg, index) => {
         if (bg && bg.exists()) {
-          // Usar tween mais específico que só afeta o objeto target
           const tween = k.tween(
             bg.opacity,
             0,
@@ -178,7 +253,6 @@ export default function game() {
               if (bg && bg.exists()) {
                 bg.opacity = val
               }
-              // PROTEÇÃO ATIVA: força Z-index e opacidade do player a cada frame
               player.z = 1000
               if (player && player.opacity !== undefined) {
                 player.opacity = 1
@@ -187,7 +261,6 @@ export default function game() {
             k.easings.easeOutQuad
           )
           tween.onEnd(() => {
-            // Garantir que o player não foi afetado
             player.z = 1000
             if (player && player.opacity !== undefined) {
               player.opacity = 1
@@ -210,7 +283,6 @@ export default function game() {
               if (platform && platform.exists()) {
                 platform.opacity = val
               }
-              // PROTEÇÃO ATIVA: força Z-index e opacidade do player a cada frame
               player.z = 1000
               if (player && player.opacity !== undefined) {
                 player.opacity = 1
@@ -219,7 +291,6 @@ export default function game() {
             k.easings.easeOutQuad
           )
           tween.onEnd(() => {
-            // Garantir que o player não foi afetado
             player.z = 1000
             if (player && player.opacity !== undefined) {
               player.opacity = 1
@@ -269,7 +340,6 @@ export default function game() {
               if (bg && bg.exists()) {
                 bg.opacity = val
               }
-              // PROTEÇÃO ATIVA: força Z-index e opacidade do player a cada frame
               player.z = 1000
               if (player && player.opacity !== undefined) {
                 player.opacity = 1
@@ -278,7 +348,6 @@ export default function game() {
             k.easings.easeInQuad
           )
           tween.onEnd(() => {
-            // Garantir que o player não foi afetado
             player.z = 1000
             if (player && player.opacity !== undefined) {
               player.opacity = 1
@@ -301,7 +370,6 @@ export default function game() {
               if (platform && platform.exists()) {
                 platform.opacity = val
               }
-              // PROTEÇÃO ATIVA: força Z-index e opacidade do player a cada frame
               player.z = 1000
               if (player && player.opacity !== undefined) {
                 player.opacity = 1
@@ -310,7 +378,6 @@ export default function game() {
             k.easings.easeInQuad
           )
           tween.onEnd(() => {
-            // Garantir que o player não foi afetado
             player.z = 1000
             if (player && player.opacity !== undefined) {
               player.opacity = 1
@@ -324,80 +391,17 @@ export default function game() {
     })
   }
 
-  // CORREÇÃO 4: Função de transição mais robusta
-  const switchToNextStage = async () => {
-    if (isTransitioning) return
-    
-    stageRepeatCount++
-    
-    if (stageRepeatCount >= maxRepeatsPerStage) {
-      isTransitioning = true
-      
-      console.log(`Iniciando transição do cenário... Player Z-index: ${player.z}, Opacity: ${player.opacity}`)
-      
-      // GARANTIR que o player fique visível durante toda a transição
-      player.z = 1000
-      if (player && player.opacity !== undefined) {
-        player.opacity = 1
-      }
-      
-      // 1. Fazer fade out do cenário atual
-      await fadeOutScenery(0.25)
-      
-      console.log(`Fade out completo. Player Z-index: ${player.z}, Opacity: ${player.opacity}`)
-      
-      // FORÇA novamente após fade out
-      player.z = 1000
-      if (player && player.opacity !== undefined) {
-        player.opacity = 1
-      }
-      
-      // 2. Trocar para o próximo cenário
-      currentStageIndex = (currentStageIndex + 1) % stages.length
-      stageRepeatCount = 0
-      
-      // 3. Recriar todos os elementos do cenário
-      createSceneryElements()
-      
-      // 4. Aguardar a recriação dos elementos
-      await k.wait(0.1)
-      
-      // 5. Garantir novamente que o player esteja na frente
-      player.z = 1000
-      if (player && player.opacity !== undefined) {
-        player.opacity = 1
-      }
-      
-      // 6. Atualizar texto de informação do cenário
-      stageInfoText.text = `${getCurrentStage().name} - Repetição: ${stageRepeatCount + 1}/${maxRepeatsPerStage}`
-      
-      console.log(`Cenário trocado para: ${getCurrentStage().name}. Player Z-index: ${player.z}, Opacity: ${player.opacity}`)
-      
-      // 7. Fazer fade in do novo cenário
-      await fadeInScenery(0.25)
-      
-      console.log(`Transição completa! Player Z-index final: ${player.z}, Opacity: ${player.opacity}`)
-      
-      // FORÇA final
-      player.z = 1000
-      if (player && player.opacity !== undefined) {
-        player.opacity = 1
-      }
-      
-      isTransitioning = false
-    }
-  }
-
   // **INICIALIZAÇÃO**: Criar elementos iniciais do cenário (visíveis desde o início)
   createSceneryElements(true)
 
+  makeTextShadow()
   // Debug text
   const debugText = k.add([
     k.text("", { font: "mania", size: 24 }),
-    k.pos(1650, 100),
+    k.pos(1390, 100),
     k.color(255, 255, 255),
     k.fixed(),
-  ])
+  ]);
 
   // Texto para mostrar informações do cenário atual
   const stageInfoText = k.add([
@@ -427,7 +431,7 @@ export default function game() {
   // Sistema de pontuação
   const scoreText = k.add([
     k.text("MÉDIA: 0.0", { font: "mania", size: 72 }),
-    k.pos(20, 20),
+    k.pos(20, 12),
     k.fixed(),
   ])
 
@@ -437,13 +441,41 @@ export default function game() {
     k.fixed()
   ])
 
+  // ========================================
+  // ADIÇÕES: Sistema de preview da próxima nota
+  // ========================================
+  let nextNoteValue = k.randi(0, 11) // Próxima nota que será gerada
+  let nextNoteAfterThat = k.randi(0, 11) // Nota após a próxima
+
+  // Texto para mostrar a próxima nota
+  // const nextNoteText = k.add([
+  //   k.text(`PRÓXIMA NOTA: ${nextNoteValue}`, { 
+  //     font: "mania", 
+  //     size: 48,
+  //     align: "center" 
+  //   }),
+  //   k.pos(1000, 50),
+  //   k.anchor("center"),
+  //   k.color(255, 255, 255), // Cor amarela para destacar
+  //   k.fixed(),
+  // ])
+
+  // Preview visual da próxima nota
+  let nextNotePreview = k.add([
+    k.sprite(`note${nextNoteValue}`),
+    k.pos(1000, 140),
+    k.anchor("center"),
+    k.scale(1.5),
+    k.fixed(),
+  ])
+
   const backButton = k.add([
     k.rect(172, 60, { radius: 8 }),
     k.color(0, 0, 0, 0.7),
     k.outline(4, k.Color.fromArray([255, 255, 255])),
     k.anchor("center"),
     k.area(),
-    k.pos(k.width() - 100, 50),
+    k.pos(1820, 40),
     k.fixed(),
   ])
 
@@ -488,42 +520,61 @@ export default function game() {
     k.destroy(note)
   })
 
-  // Colisão com inimigos
-  player.onCollide("enemy", (enemy) => {
-    if (!player.isGrounded()) {
-      k.play("destroy", { volume: 0.5 })
-      k.play("hyper-ring", { volume: 0.5 })
-      k.destroy(enemy)
-      player.play("jump")
-      player.jump()
-      scoreMultiplier += 1
+player.onCollide("enemy", (enemy) => {
+  // Se está pulando (não está no chão), mantém a lógica original
+  if (!player.isGrounded()) {
+    k.play("destroy", { volume: 0.5 })
+    k.play("hyper-ring", { volume: 0.5 })
+    k.destroy(enemy)
+    player.play("jump")
+    player.jump()
+    scoreMultiplier += 1
 
-      const bonus = 6
-      totalScore += bonus
-      notesCollected += 1
-      averageScore = totalScore / notesCollected
+    const bonus = 6
+    totalScore += bonus
+    notesCollected += 1
+    averageScore = totalScore / notesCollected
 
-      scoreText.text = `MÉDIA: ${averageScore.toFixed(1)}`
-      notesCollectedText.text = `NOTAS: ${notesCollected}`
+    scoreText.text = `MÉDIA: ${averageScore.toFixed(1)}`
+    notesCollectedText.text = `NOTAS: ${notesCollected}`
 
-      if (scoreMultiplier === 1) player.ringCollectUI.text = `+${bonus}`
-      if (scoreMultiplier > 1) player.ringCollectUI.text = `x${scoreMultiplier}`
-      k.wait(1, () => {
-        player.ringCollectUI.text = ""
-      })
-      return
-    }
+    if (scoreMultiplier === 1) player.ringCollectUI.text = `+${bonus}`
+    if (scoreMultiplier > 1) player.ringCollectUI.text = `x${scoreMultiplier}`
+    k.wait(1, () => {
+      player.ringCollectUI.text = ""
+    })
+    return
+  }
 
-    k.play("hurt", { volume: 0.5 })
-    k.setData("current-score", averageScore)
-    k.go("gameover", citySfx)
+  // NOVA LÓGICA: Se está correndo (no chão)
+  k.play("hurt", { volume: 0.5 })
+  k.destroy(enemy)
+  
+  // Adicionar uma nota com valor 0
+  totalScore += 0 // Adiciona 0 ao score
+  notesCollected++
+  averageScore = notesCollected > 0 ? totalScore / notesCollected : 0
+
+  // Atualizar textos de pontuação
+  scoreText.text = `MÉDIA: ${averageScore.toFixed(1)}`
+  notesCollectedText.text = `NOTAS: ${notesCollected}`
+
+  // Mostrar feedback visual da nota 0
+  player.ringCollectUI.text = `+0`
+  k.wait(1, () => {
+    player.ringCollectUI.text = ""
   })
 
-  //Ajusta a velocidade do jogo
-  let gameSpeed = 800
+  // Reduzir velocidade do jogo em 10%
+  gameSpeed = gameSpeed * 0.9
+  console.log(`Velocidade reduzida para: ${Math.round(gameSpeed)}`)
+})
+
+  // Ajusta a velocidade do jogo
+  let gameSpeed = 1200
   k.loop(1, () => {
-    if (gameSpeed < 3000) {
-      gameSpeed += 20
+    if (gameSpeed < 5000) {
+      gameSpeed += 25
     }
   })
 
@@ -547,17 +598,40 @@ export default function game() {
 
   spawnMotoBug()
 
-  // Spawn de notas
+  // MODIFICAÇÃO: Spawn de notas com sistema de preview
   const spawnNote = () => {
-    const note = makeNote(k.vec2(k.width() + 50, k.randi(650, 745)))
+    // Usar o valor pré-definido da próxima nota
+    const note = makeNote(k.vec2(k.width() + 50, k.randi(650, 745)), nextNoteValue)
+    
     note.onUpdate(() => {
       note.move(-gameSpeed, 0)
     })
+    
     note.onExitScreen(() => {
       if (note.pos.x < -note.width) {
         k.destroy(note)
       }
     })
+    
+    // Atualizar o sistema de preview para a próxima nota
+    nextNoteValue = nextNoteAfterThat
+    nextNoteAfterThat = k.randi(0, 11)
+    
+    // Atualizar o texto de preview
+    // nextNoteText.text = `PRÓXIMA NOTA: ${nextNoteValue}`
+    
+    // Atualizar o sprite de preview
+    if (nextNotePreview && nextNotePreview.exists()) {
+      k.destroy(nextNotePreview)
+    }
+    nextNotePreview = k.add([
+      k.sprite(`note${nextNoteValue}`),
+      k.pos(1000, 83),
+      k.anchor("center"),
+      k.scale(1.5),
+      k.fixed(),
+    ])
+    
     const waitTime = k.rand(0.8, 2.5)
     k.wait(waitTime, spawnNote)
   }
@@ -574,78 +648,172 @@ export default function game() {
     "platform",
   ])
 
-  // Sistema de controle de distância para troca de cenário
+  // CORREÇÃO PRINCIPAL: Sistema que só faz fade quando troca de cenário
+  
+  // 1. Substituir as variáveis de controle de distância:
   let distanceTraveled = 0
   const distancePerRepetition = 11440
   let nextSwitchDistance = distancePerRepetition
 
-  // Remover fade in inicial - elementos já começam visíveis
-  // fadeInScenery(0.8) - REMOVIDO
+  // CORREÇÃO: Variáveis de fade só para mudança de cenário real
+  let nextScenarioChangeDistance = distancePerRepetition * maxRepeatsPerStage // Só após todas as repetições
+  const fadeStartOffset = 500
+  let nextFadeStartDistance = nextScenarioChangeDistance - fadeStartOffset
+  let isFading = false
 
-  // CORREÇÃO 5: Loop principal com proteção contra ghosting
+  // Função corrigida switchToNextStage - VERSÃO COMPLETA CORRIGIDA:
+  const switchToNextStage = async () => {
+    if (isTransitioning) return
+    
+    isTransitioning = true
+    stageRepeatCount++
+    
+    console.log(`Transição iniciada - Repetição: ${stageRepeatCount}/${maxRepeatsPerStage}`)
+    
+    // GARANTIR que o player fique visível
+    player.z = 1000
+    if (player && player.opacity !== undefined) {
+      player.opacity = 1
+    }
+    
+    // DECISÃO: Verificar se é troca de cenário ou apenas repetição
+    const isScenarioChange = stageRepeatCount >= maxRepeatsPerStage
+    
+    if (isScenarioChange) {
+      console.log(`MUDANÇA DE CENÁRIO: ${getCurrentStage().name} → próximo cenário`)
+      
+      // APENAS na mudança de cenário: fazer fade out (se ainda não foi feito)
+      if (!isFading) {
+        await fadeOutScenery(0.2)
+      }
+      
+      // Trocar para o próximo cenário
+      currentStageIndex = (currentStageIndex + 1) % stages.length
+      stageRepeatCount = 0
+      
+      console.log(`Cenário trocado para: ${getCurrentStage().name}`)
+      
+      // Recriar elementos para o novo cenário
+      createSceneryElements()
+      
+      // Aguardar recriação
+      await k.wait(0.00)
+      
+      // Garantir player na frente
+      player.z = 1000
+      if (player && player.opacity !== undefined) {
+        player.opacity = 1
+      }
+      
+      // APENAS na mudança de cenário: fazer fade in
+      await fadeInScenery(0.4)
+      console.log(`Fade in completo para: ${getCurrentStage().name}`)
+      
+    } else {
+      console.log(`REPETIÇÃO do cenário: ${getCurrentStage().name} (${stageRepeatCount + 1}/${maxRepeatsPerStage})`)
+      
+      // Em repetições: SEM fade, apenas recriar elementos instantaneamente COM OPACIDADE TOTAL
+      createSceneryElementsWithoutFade()
+      
+      // Aguardar recriação
+      await k.wait(0.02)
+      
+      // Garantir player na frente
+      player.z = 1000
+      if (player && player.opacity !== undefined) {
+        player.opacity = 1
+      }
+    }
+    
+    // Atualizar texto
+    stageInfoText.text = `${getCurrentStage().name} - Repetição: ${stageRepeatCount + 1}/${maxRepeatsPerStage}`
+    
+    // Garantir player visível
+    player.z = 1000
+    if (player && player.opacity !== undefined) {
+      player.opacity = 1
+    }
+    
+    isFading = false
+    isTransitioning = false
+  }
+
+  // 3. Lógica corrigida no onUpdate():
   k.onUpdate(() => {
     if (player.isGrounded()) scoreMultiplier = 0
 
-    // PROTEÇÃO ANTI-GHOSTING: Manter Z-index e opacidade do player sempre corretos
+    // Proteção do player
     if (player.z !== 1000) {
-      console.log(`CORRIGINDO Z-index do player de ${player.z} para 1000`)
       player.z = 1000
     }
-
-    // PROTEÇÃO CONTÍNUA: Verificar e corrigir opacidade do player constantemente
     if (player && player.opacity !== undefined && player.opacity !== 1) {
-      console.log(`CORRIGINDO opacidade do player de ${player.opacity} para 1`)
       player.opacity = 1
     }
 
-    const backgroundSpeed = gameSpeed * 0.3
-    
-    // Acumular distância percorrida
+    const backgroundSpeed = gameSpeed * 0.5
     distanceTraveled += backgroundSpeed * k.dt()
 
-    // Verificar se é hora de trocar de cenário
+    // CORREÇÃO: Fade antecipado APENAS quando está próximo de uma mudança real de cenário
+    const isNearScenarioChange = distanceTraveled >= nextFadeStartDistance
+    
+    if (isNearScenarioChange && !isFading && !isTransitioning) {
+      // Verificar se a próxima transição será realmente uma mudança de cenário
+      const nextRepetitionCount = stageRepeatCount + 1
+      const willChangeScenario = nextRepetitionCount >= maxRepeatsPerStage
+      
+      if (willChangeScenario) {
+        isFading = true
+        console.log(`Iniciando fade antecipado - MUDANÇA DE CENÁRIO em breve`)
+        
+        fadeOutScenery(0.6).then(() => {
+          console.log('Fade out antecipado completo')
+        })
+      }
+    }
+
+    // Fazer transição a cada distancePerRepetition (mas o fade só acontece quando necessário)
     if (distanceTraveled >= nextSwitchDistance && !isTransitioning) {
       switchToNextStage()
+      
+      // Atualizar próxima distância de transição
       nextSwitchDistance += distancePerRepetition
+      
+      // CORREÇÃO: Só atualizar distâncias de fade quando realmente for mudar cenário
+      const willChangeScenarioNext = (stageRepeatCount + 1) >= maxRepeatsPerStage
+      if (willChangeScenarioNext) {
+        nextScenarioChangeDistance = nextSwitchDistance + (distancePerRepetition * (maxRepeatsPerStage - 1))
+        nextFadeStartDistance = nextScenarioChangeDistance - fadeStartOffset
+      }
     }
 
-    // Mover e reposicionar backgrounds (só se existirem e não estiver em transição)
-    if (!isTransitioning && backgroundPieces.length >= 2) {
-      for (const bg of backgroundPieces) {
-        if (bg && bg.exists()) {
-          bg.move(-backgroundSpeed, 0)
+    // Movimento do cenário (sempre contínuo)
+    if (backgroundPieces.length >= 2 && platforms.length >= 2) {
+      const validBackgrounds = backgroundPieces.filter(bg => bg && bg.exists())
+      const validPlatforms = platforms.filter(platform => platform && platform.exists())
+      
+      for (const bg of validBackgrounds) {
+        bg.move(-backgroundSpeed, 0)
+        if (bg.pos.x + actualBgWidth <= 0) {
+          bg.pos.x += 2 * actualBgWidth
+        }
+      }
 
-          if (bg.pos.x + actualBgWidth <= 0) {
-            bg.pos.x += 2 * actualBgWidth
-          }
+      for (const platform of validPlatforms) {
+        platform.move(-backgroundSpeed, 0)
+        if (platform.pos.x + actualPlatformWidth <= 0) {
+          platform.pos.x += 2 * actualPlatformWidth
         }
       }
     }
 
-    // Debug text - INCLUIR Z-index e opacidade do player
-    if (debugText && backgroundPieces.length >= 2) {
-      const bg1Exists = backgroundPieces[0] && backgroundPieces[0].exists()
-      const bg2Exists = backgroundPieces[1] && backgroundPieces[1].exists()
+    // Debug melhorado
+    if (debugText) {
+      const nextRepetition = stageRepeatCount + 1
+      const willChangeNext = nextRepetition >= maxRepeatsPerStage
+      const status = isFading ? "FADING" : isTransitioning ? "TRANSITIONING" : "NORMAL"
+      const distanceToNext = Math.max(0, nextSwitchDistance - distanceTraveled)
       
-      debugText.text = `BG1 X: ${bg1Exists ? Math.round(backgroundPieces[0].pos.x) : 'N/A'} | BG2 X: ${bg2Exists ? Math.round(backgroundPieces[1].pos.x) : 'N/A'} | Player Z: ${player.z} | Op: ${player.opacity} | Dist: ${Math.round(distanceTraveled)}`
-    }
-
-    // Lógica das plataformas visuais (só se existirem e não estiver em transição)
-    if (!isTransitioning && platforms.length >= 2) {
-      const platform1Exists = platforms[0] && platforms[0].exists()
-      const platform2Exists = platforms[1] && platforms[1].exists()
-      
-      if (platform1Exists && platform2Exists) {
-        const platformWidth = platforms[0].width
-
-        platforms[0].move(-gameSpeed, 0)
-        platforms[1].moveTo(platforms[0].pos.x + platformWidth, 450)
-
-        if (platforms[0].pos.x + platformWidth < 0) {
-          platforms[0].pos.x = platforms[1].pos.x + platformWidth
-          platforms.push(platforms.shift())
-        }
-      }
+      debugText.text = `Speed: ${Math.round(gameSpeed)} | ${status} | Next: ${willChangeNext ? 'CHANGE' : 'REPEAT'} | Dist: ${Math.round(distanceToNext)}`
     }
   })
 }
