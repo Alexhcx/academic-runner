@@ -1,7 +1,7 @@
 {
   "name": "academic-runner",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.4.19"
+    "vite": "^6.3.5"
   },
   "dependencies": {
     "kaplay": "^3001.0.0-alpha.21"
