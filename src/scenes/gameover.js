@@ -87,56 +87,37 @@ export default function gameover() {
       "result-element"
     ])
 
-    // Melhor média
-    k.add([
-      k.text(`MELHOR MÉDIA: ${bestScore.toFixed(1)}`, { font: "mania", size: 64 }),
-      k.anchor("center"),
-      k.pos(k.center().x - 400, 320),
-      "result-element"
-    ])
-
     // Média atual
     k.add([
       k.text(`MÉDIA ATUAL: ${currentScore.toFixed(1)}`, { font: "mania", size: 64 }),
       k.anchor("center"),
-      k.pos(k.center().x + 400, 320),
+      k.pos(k.center().x, 520),
       "result-element"
     ])
-
-    // Caixa do melhor rank
-    const bestRankBox = k.add([
-      k.rect(300, 300, { radius: 4 }),
-      k.color(0, 0, 0),
-      k.anchor("center"),
-      k.outline(6, k.Color.fromArray([255, 255, 255])),
-      k.pos(k.center().x - 400, 500),
-      "result-element"
-    ])
-    bestRankBox.add([k.text(bestRank, { font: "mania", size: 100 }), k.anchor("center")])
 
     // Caixa do rank atual
-    const currentRankBox = k.add([
-      k.rect(300, 300, { radius: 4 }),
-      k.color(0, 0, 0),
-      k.anchor("center"),
-      k.outline(6, k.Color.fromArray([255, 255, 255])),
-      k.pos(k.center().x + 400, 500),
-      "result-element"
-    ])
-    currentRankBox.add([k.text(currentRank, { font: "mania", size: 100 }), k.anchor("center")])
+    // const currentRankBox = k.add([
+    //   k.rect(300, 300, { radius: 4 }),
+    //   k.color(0, 0, 0),
+    //   k.anchor("center"),
+    //   k.outline(6, k.Color.fromArray([255, 255, 255])),
+    //   k.pos(k.center().x, 515),
+    //   "result-element"
+    // ])
+    // currentRankBox.add([k.text(currentRank, { font: "mania", size: 100 }), k.anchor("center")])
 
     // Instruções
     k.add([
       k.text("Aperte Espaço/Clique/Toque para jogar", { font: "mania", size: 48 }),
       k.anchor("center"),
-      k.pos(k.center().x, 720),
+      k.pos(k.center().x, 850),
       "result-element"
     ])
 
     k.add([
       k.text("Aperte R para ver Ranking", { font: "mania", size: 36 }),
       k.anchor("center"),
-      k.pos(k.center().x, 780),
+      k.pos(k.center().x, 910),
       "result-element"
     ])
   }
@@ -159,29 +140,29 @@ export default function gameover() {
     // Cabeçalho da tabela
     k.add([
       k.text("POS", { font: "mania", size: 36 }),
-      k.pos(200, 180),
+      k.pos(620, 180),
       "ranking-element"
     ])
     k.add([
       k.text("PERSONAGEM", { font: "mania", size: 36 }),
-      k.pos(300, 180),
+      k.pos(720, 180),
       "ranking-element"
     ])
     k.add([
       k.text("MÉDIA", { font: "mania", size: 36 }),
-      k.pos(650, 180),
+      k.pos(1070, 180),
       "ranking-element"
     ])
     k.add([
       k.text("RANK", { font: "mania", size: 36 }),
-      k.pos(800, 180),
+      k.pos(1220, 180),
       "ranking-element"
     ])
 
     // Linha separadora
     k.add([
       k.rect(800, 4),
-      k.pos(200, 220),
+      k.pos(560, 220),
       k.color(255, 255, 255),
       "ranking-element"
     ])
@@ -209,7 +190,7 @@ export default function gameover() {
       if (isCurrentEntry) {
         k.add([
           k.rect(800, 40),
-          k.pos(180, yPos - 5),
+          k.pos(560, yPos - 5),
           k.color(0, 100, 0, 0.3),
           "ranking-element"
         ])
@@ -218,7 +199,7 @@ export default function gameover() {
       // Posição
       k.add([
         k.text(`${index + 1}°`, { font: "mania", size: 32 }),
-        k.pos(200, yPos),
+        k.pos(635, yPos),
         k.color(...textColor),
         "ranking-element"
       ])
@@ -226,7 +207,7 @@ export default function gameover() {
       // Nome do personagem
       k.add([
         k.text(entry.characterName, { font: "mania", size: 32 }),
-        k.pos(300, yPos),
+        k.pos(742, yPos),
         k.color(...textColor),
         "ranking-element"
       ])
@@ -234,7 +215,7 @@ export default function gameover() {
       // Média
       k.add([
         k.text(entry.score.toFixed(1), { font: "mania", size: 32 }),
-        k.pos(650, yPos),
+        k.pos(1090, yPos),
         k.color(...textColor),
         "ranking-element"
       ])
@@ -242,7 +223,7 @@ export default function gameover() {
       // Rank
       k.add([
         k.text(entryRank, { font: "mania", size: 32 }),
-        k.pos(800, yPos),
+        k.pos(1250, yPos),
         k.color(...textColor),
         "ranking-element"
       ])
@@ -281,14 +262,14 @@ export default function gameover() {
     k.add([
       k.text("Aperte Espaço/Clique/Toque para jogar", { font: "mania", size: 48 }),
       k.anchor("center"),
-      k.pos(k.center().x, 720),
+      k.pos(k.center().x, 850),
       "ranking-element"
     ])
 
     k.add([
       k.text("Aperte R para voltar ao Resultado", { font: "mania", size: 36 }),
       k.anchor("center"),
-      k.pos(k.center().x, 780),
+      k.pos(k.center().x, 910),
       "ranking-element"
     ])
   }
