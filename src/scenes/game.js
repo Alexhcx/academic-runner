@@ -7,8 +7,6 @@ import { makeGameControls } from "../scenes/components/gameControls";
 import { makeMobileJumpButton } from "./components/mobileButtons";
 
 export default function game() {
-//   console.log("=== INICIANDO CENA GAME ===");
-//   console.log("Cor de fundo do canvas:", k.getBackground());
   
   const citySfx = window.gameSoundtrack;
   if (citySfx && citySfx.paused) {
@@ -420,14 +418,6 @@ export default function game() {
     k.fixed(),
   ]);
 
-  // Debug info
-//   const debugText = k.add([
-//     k.text("", { font: "mania", size: 24 }),
-//     k.pos(20, 220),
-//     k.color(255, 255, 255),
-//     k.fixed(),
-//   ]);
-
   // Sistema de preview da próxima nota
   let nextNoteValue = k.randi(0, 11);
   let nextNoteAfterThat = k.randi(0, 11);
@@ -650,15 +640,5 @@ export default function game() {
     
     // Atualizar o background manager
     bgManager.update(backgroundSpeed * k.dt());
-
-    // Atualizar debug info
-//     if (bgManager.initialized && bgManager.layers.length > 0 && debugText && debugText.exists()) { // Added check for debugText existence
-//       const activeLayer = bgManager.layers[0];
-//       const layerScrollX = bgManager.scrollX - activeLayer.startX;
-//       const progress = (layerScrollX / activeLayer.totalWidth) * 100;
-//       const currentBg = Math.floor(layerScrollX / bgManager.bgWidth);
-//       const bgName = activeLayer.phase.backgrounds[currentBg] || activeLayer.phase.backgrounds[0];
-//       debugText.text = `Progresso: ${progress.toFixed(1)}% | Atual: ${bgName} | Camadas: ${bgManager.layers.length}`;
-//     }
   });
 }
