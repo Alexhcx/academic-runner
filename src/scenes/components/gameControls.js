@@ -287,7 +287,7 @@ export function makeGameControls() {
       k.outline(3, k.Color.fromArray([255, 255, 255])),
       k.anchor("center"),
       k.area(),
-      k.pos(45, 1040),
+      k.pos(k.width() - 205, 1040), // Posição ajustada para a direita
       k.fixed(),
       k.z(1001),
       "musicButton"
@@ -328,7 +328,7 @@ export function makeGameControls() {
       k.outline(3, k.Color.fromArray([255, 255, 255])),
       k.anchor("center"),
       k.area(),
-      k.pos(125, 1040),
+      k.pos(k.width() - 125, 1040), // Posição ajustada para a direita
       k.fixed(),
       k.z(1001),
       "soundButton"
@@ -369,7 +369,7 @@ export function makeGameControls() {
       k.outline(3, k.Color.fromArray([255, 255, 255])),
       k.anchor("center"),
       k.area(),
-      k.pos(205, 1040),
+      k.pos(k.width() - 45, 1040), // Posição ajustada para a direita
       k.fixed(),
       k.z(1001),
       "pauseButton"

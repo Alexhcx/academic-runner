@@ -104,10 +104,6 @@ export default function game() {
         ]);
         
         // Forçar visibilidade
-        // if (bg.visible !== undefined) {
-        //   bg.visible = true;
-        // }
-
         bg.visible = true;
         
         console.log(`Background ${index} criado. Opacidade real:`, bg.opacity, "Visible:", bg.visible);
@@ -360,8 +356,99 @@ export default function game() {
   const gameControls = makeGameControls();
   gameControls.init();
 
+  // BOTÃO DE PULAR VISUAL PARA MOBILE
+  const jumpButton = k.add([
+    k.circle(60),
+    k.color(255, 255, 255, 0.2),
+    k.outline(4, k.Color.fromArray([255, 255, 255, 0.6])),
+    k.anchor("center"),
+    k.area(),
+    k.pos(120, k.height() - 120),
+    k.fixed(),
+    k.z(2000), // Alto z-index para ficar acima de tudo
+    "jumpButton"
+  ]);
+
+  // Adicionar ícone ou texto no botão
+  jumpButton.add([
+    k.text("↑", { font: "mania", size: 48 }),
+    k.anchor("center"),
+    k.color(255, 255, 255, 0.8)
+  ]);
+
+  // Estado do botão
+  let isJumpButtonPressed = false;
+
+  // Visual feedback e controle do botão
+  jumpButton.onTouchStart(() => {
+    if (!isJumpButtonPressed) {
+      isJumpButtonPressed = true;
+      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.4]);
+      jumpButton.scale = k.vec2(0.9);
+      jumpButton.outline.width = 6;
+      k.pressButton("jump");
+      k.play("ring", { volume: 0.3 }); // Som de feedback
+    }
+  });
+
+  jumpButton.onTouchEnd(() => {
+    if (isJumpButtonPressed) {
+      isJumpButtonPressed = false;
+      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.2]);
+      jumpButton.scale = k.vec2(1);
+      jumpButton.outline.width = 4;
+      k.releaseButton("jump");
+    }
+  });
+
+  // Para mouse (útil para testes no desktop)
+  jumpButton.onMousePress(() => {
+    if (!isJumpButtonPressed) {
+      isJumpButtonPressed = true;
+      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.4]);
+      jumpButton.scale = k.vec2(0.9);
+      jumpButton.outline.width = 6;
+      k.pressButton("jump");
+      k.play("ring", { volume: 0.3 });
+    }
+  });
+
+  jumpButton.onMouseRelease(() => {
+    if (isJumpButtonPressed) {
+      isJumpButtonPressed = false;
+      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.2]);
+      jumpButton.scale = k.vec2(1);
+      jumpButton.outline.width = 4;
+      k.releaseButton("jump");
+    }
+  });
+
+  // Efeito hover para desktop
+  jumpButton.onHover(() => {
+    if (!isJumpButtonPressed) {
+      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.3]);
+      jumpButton.outline.width = 5;
+    }
+  });
+
+  jumpButton.onHoverEnd(() => {
+    if (!isJumpButtonPressed) {
+      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.2]);
+      jumpButton.outline.width = 4;
+    }
+  });
+
+  // Detectar se é dispositivo touch e ajustar visibilidade
+  // Você pode querer sempre mostrar o botão ou ter uma lógica específica
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile && !k.isTouchscreen()) {
+    // Se quiser esconder em desktop, descomente as linhas abaixo:
+    // jumpButton.opacity = 0;
+    // jumpButton.area.scale = k.vec2(0);
+  }
+
   // UI Elements
-  makeTextShadow();
+  // makeTextShadow();
   
   const stageInfoText = k.add([
     k.text(phases[currentPhaseIndex].name, {
