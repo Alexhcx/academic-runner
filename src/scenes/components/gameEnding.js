@@ -1,3 +1,5 @@
+import { makeGraduationEnding } from "./formatura";
+
 export function makeGameEnding(k) {
   let isActive = false;
   let currentTextIndex = 0;
@@ -7,6 +9,7 @@ export function makeGameEnding(k) {
   let characterName = "";
   let averageScore = 0;
   let isApproved = false;
+  let graduationEnding = null;
   
   // Criar o fundo escuro
   const createBackdrop = () => {
@@ -81,8 +84,19 @@ export function makeGameEnding(k) {
   const showNextText = () => {
     if (currentTextIndex >= texts.length) {
       // Fim da sequência
-      if (onComplete) {
-        onComplete(isApproved);
+      if (isApproved && graduationEnding) {
+        // Se aprovado, mostrar tela de formatura antes de finalizar
+        console.log("Iniciando tela de formatura..."); // Debug
+        graduationEnding.start(() => {
+          if (onComplete) {
+            onComplete(isApproved);
+          }
+        });
+      } else {
+        // Se reprovado, finalizar direto
+        if (onComplete) {
+          onComplete(isApproved);
+        }
       }
       return;
     }
@@ -110,6 +124,11 @@ export function makeGameEnding(k) {
     isApproved = avgScore >= 6;
     onComplete = onCompleteCallback;
     currentTextIndex = 0;
+    
+    // Criar instância do graduation ending se aprovado
+    if (isApproved) {
+      graduationEnding = makeGraduationEnding(k);
+    }
     
     // Definir textos baseado na aprovação
     texts = [
@@ -168,6 +187,11 @@ export function makeGameEnding(k) {
     
     k.get("ending-backdrop").forEach(obj => k.destroy(obj));
     k.get("ending-text").forEach(obj => k.destroy(obj));
+    
+    if (graduationEnding) {
+      graduationEnding.cleanup();
+      graduationEnding = null;
+    }
     
     textDisplay = null;
     onComplete = null;

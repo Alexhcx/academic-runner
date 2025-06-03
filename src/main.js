@@ -19,13 +19,13 @@ k.loadSprite("fase03-03", "graphics/fasesjpg/0303.jpg")
 k.loadSprite("fase04-01", "graphics/fasesjpg/0401.jpg")
 k.loadSprite("fase04-02", "graphics/fasesjpg/0402.jpg")
 k.loadSprite("fase04-03", "graphics/fasesjpg/0403.jpg")
+k.loadSprite("formatura", "graphics/fasesjpg/prom.png")
+k.loadSprite("formandos", "graphics/perg.png")
 k.loadSprite("fim", "graphics/fasesjpg/fim.png")
 k.loadSprite("platforms", "graphics/fasesjpg/platforms.png")
 k.loadSprite("platforms02", "graphics/fasesjpg/platforms02.png")
 k.loadSprite("platforms03", "graphics/fasesjpg/platforms03.png")
 k.loadSprite("platforms04", "graphics/fasesjpg/platforms04.png")
-
-
 
 // Gleisla
 k.loadSprite("gleisla", "graphics/gleisla.png", {

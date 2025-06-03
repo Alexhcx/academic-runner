@@ -601,10 +601,10 @@ export default function game() {
   });
 
   // Velocidade do jogo
-  let gameSpeed = 4000;
+  let gameSpeed = 1500;
   k.loop(1, () => {
     if (gameSpeed < 5000) {
-      gameSpeed += 50;
+      gameSpeed += 25;
     }
   });
 
