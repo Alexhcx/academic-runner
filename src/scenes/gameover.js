@@ -59,8 +59,16 @@ export default function gameover() {
     bestRank = currentRank
   }
 
-  // Estado para alternar entre resultado e ranking
   let showRanking = false
+
+  // Função para resetar o ranking
+  const resetRanking = () => {
+    k.setData("rankings", [])
+    rankings = []
+    if (showRanking) {
+      createRankingScreen()
+    }
+  }
 
   // Função para criar a tela de resultado
   const createResultScreen = () => {
@@ -94,17 +102,6 @@ export default function gameover() {
       k.pos(k.center().x, 520),
       "result-element"
     ])
-
-    // Caixa do rank atual
-    // const currentRankBox = k.add([
-    //   k.rect(300, 300, { radius: 4 }),
-    //   k.color(0, 0, 0),
-    //   k.anchor("center"),
-    //   k.outline(6, k.Color.fromArray([255, 255, 255])),
-    //   k.pos(k.center().x, 515),
-    //   "result-element"
-    // ])
-    // currentRankBox.add([k.text(currentRank, { font: "mania", size: 100 }), k.anchor("center")])
 
     // Instruções
     k.add([
@@ -234,31 +231,30 @@ export default function gameover() {
       const yPos = 250 + (i * 45)
       k.add([
         k.text(`${i + 1}°`, { font: "mania", size: 32 }),
-        k.pos(200, yPos),
+        k.pos(635, yPos),
         k.color(100, 100, 100),
         "ranking-element"
       ])
       k.add([
         k.text("---", { font: "mania", size: 32 }),
-        k.pos(300, yPos),
+        k.pos(742, yPos),
         k.color(100, 100, 100),
         "ranking-element"
       ])
       k.add([
         k.text("0.0", { font: "mania", size: 32 }),
-        k.pos(650, yPos),
+        k.pos(1090, yPos),
         k.color(100, 100, 100),
         "ranking-element"
       ])
       k.add([
         k.text("F", { font: "mania", size: 32 }),
-        k.pos(800, yPos),
+        k.pos(1250, yPos),
         k.color(100, 100, 100),
         "ranking-element"
       ])
     }
 
-    // Instruções
     k.add([
       k.text("Aperte Espaço/Clique/Toque para jogar", { font: "mania", size: 48 }),
       k.anchor("center"),
@@ -272,6 +268,39 @@ export default function gameover() {
       k.pos(k.center().x, 910),
       "ranking-element"
     ])
+
+    if (rankings.length > 0) {
+      const resetButton = k.add([
+        k.rect(200, 50, { radius: 8 }),
+        k.color(139, 0, 0), 
+        k.outline(3, k.Color.fromArray([255, 255, 255])),
+        k.anchor("center"),
+        k.area(),
+        k.pos(k.center().x, 750),
+        "ranking-element"
+      ])
+
+      resetButton.add([
+        k.text("RESET RANKING", { font: "mania", size: 28 }), 
+        k.anchor("center"),
+        k.color(255, 255, 255)
+      ])
+
+      resetButton.onHover(() => {
+        resetButton.outline.width = 5
+        resetButton.color = k.Color.fromArray([180, 0, 0])
+      })
+
+      resetButton.onHoverEnd(() => {
+        resetButton.outline.width = 3
+        resetButton.color = k.Color.fromArray([139, 0, 0])
+      })
+
+      resetButton.onClick(() => {
+        k.play("ring", { volume: 0.3 })
+        resetRanking()
+      })
+    }
   }
 
   // Botão de voltar ao menu principal
