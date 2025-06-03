@@ -1,19 +1,18 @@
 import k from "../kaplayCtx"
 import { makePlayer } from "../entities/player"
+import { makeMobileJumpButton } from "./components/mobileButtons";
 
 export default function mainMenu() {
+  makeMobileJumpButton()
   if (!k.getData("best-score")) k.setData("best-score", 0)
 
-  // Reset gravity to prevent character falling
   k.setGravity(0)
 
-  // --- Lógica do Background similar ao game.js ---
-  const bgY = -26; // Mesma posição Y do game.js, ajuste se necessário
-  const bgOpacity = 0.8; // Mesma opacidade do game.js
-  const bgScale = 2; // Mesma escala do game.js
-  const backgroundSpeed = 100; // Velocidade de movimento do background no menu
+  const bgY = -26; 
+  const bgOpacity = 0.8; 
+  const bgScale = 2; 
+  const backgroundSpeed = 100;
 
-  // Adiciona a primeira peça do background para obter sua largura real (escalada)
   const bg1 = k.add([
     k.sprite("fase01-01"),
     k.pos(0, bgY),

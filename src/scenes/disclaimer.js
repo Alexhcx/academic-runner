@@ -1,6 +1,9 @@
 import k from "../kaplayCtx"
+import { makeMobileJumpButton } from "./components/mobileButtons";
 
 export default function disclaimer() {
+  makeMobileJumpButton()
+
   k.add([
     k.text(
       `

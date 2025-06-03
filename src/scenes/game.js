@@ -2,8 +2,9 @@ import k from "../kaplayCtx";
 import { makePlayer } from "../entities/player";
 import { makeMotobug } from "../entities/motobug";
 import { makeNote } from "../entities/note";
-import { makeTextShadow } from "../scenes/components/textBackgroundShadow";
+// import { makeTextShadow } from "../scenes/components/textBackgroundShadow";
 import { makeGameControls } from "../scenes/components/gameControls";
+import { makeMobileJumpButton } from "./components/mobileButtons";
 
 export default function game() {
   // Log para verificar o estado inicial
@@ -27,22 +28,22 @@ export default function game() {
   const phases = [
     {
       name: "Fase 1",
-      backgrounds: ["fase01-01", "fase01-02", "fase01-03","fase01-01", "fase01-02", "fase01-03","fase01-01", "fase01-02", "fase01-03"],
+      backgrounds: ["fase01-01", "fase01-02", "fase01-03", "fase01-01", "fase01-02", "fase01-03", "fase01-01", "fase01-02", "fase01-03"],
       platform: "platforms"
     },
     {
       name: "Fase 2", 
-      backgrounds: ["fase02-01", "fase02-02", "fase02-03,fase02-01", "fase02-02", "fase02-03,fase02-01", "fase02-02", "fase02-03"],
+      backgrounds: ["fase02-01", "fase02-02", "fase02-03", "fase02-01", "fase02-02", "fase02-03", "fase02-01", "fase02-02", "fase02-03"],
       platform: "platforms02"
     },
     {
       name: "Fase 3",
-      backgrounds: ["fase03-01", "fase03-02", "fase03-03,fase03-01", "fase03-02", "fase03-03,fase03-01", "fase03-02", "fase03-03"],
+      backgrounds: ["fase03-01", "fase03-02", "fase03-03", "fase03-01", "fase03-02", "fase03-03", "fase03-01", "fase03-02", "fase03-03"],
       platform: "platforms03"
     },
     {
       name: "Fase 4",
-      backgrounds: ["fase04-01", "fase04-02", "fase04-03,fase04-01", "fase04-02", "fase04-03,fase04-01", "fase04-02", "fase04-03"],
+      backgrounds: ["fase04-01", "fase04-02", "fase04-03", "fase04-01", "fase04-02", "fase04-03", "fase04-01", "fase04-02", "fase04-03"],
       platform: "platforms04"
     }
   ];
@@ -356,96 +357,25 @@ export default function game() {
   const gameControls = makeGameControls();
   gameControls.init();
 
-  // BOTÃO DE PULAR VISUAL PARA MOBILE
-  const jumpButton = k.add([
-    k.circle(60),
-    k.color(255, 255, 255, 0.2),
-    k.outline(4, k.Color.fromArray([255, 255, 255, 0.6])),
-    k.anchor("center"),
-    k.area(),
-    k.pos(120, k.height() - 120),
-    k.fixed(),
-    k.z(2000), // Alto z-index para ficar acima de tudo
-    "jumpButton"
-  ]);
-
-  // Adicionar ícone ou texto no botão
-  jumpButton.add([
-    k.text("↑", { font: "mania", size: 48 }),
-    k.anchor("center"),
-    k.color(255, 255, 255, 0.8)
-  ]);
-
-  // Estado do botão
-  let isJumpButtonPressed = false;
-
-  // Visual feedback e controle do botão
-  jumpButton.onTouchStart(() => {
-    if (!isJumpButtonPressed) {
-      isJumpButtonPressed = true;
-      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.4]);
-      jumpButton.scale = k.vec2(0.9);
-      jumpButton.outline.width = 6;
-      k.pressButton("jump");
-      k.play("ring", { volume: 0.3 }); // Som de feedback
-    }
+  // USAR O COMPONENTE DE BOTÃO MOBILE
+  const jumpButton = makeMobileJumpButton({
+    pos: { x: 120, y: k.height() - 120 },
+    radius: 60,
+    bgColor: [255, 255, 255, 0.2],
+    outlineColor: [255, 255, 255, 0.6],
+    outlineWidth: 4,
+    text: "↑",
+    textSize: 48,
+    textColor: [255, 255, 255, 0.8],
+    zIndex: 2000,
+    buttonName: "jump",
+    soundName: "ring",
+    soundVolume: 0.3,
+    pressedBgColor: [255, 255, 255, 0.4],
+    pressedOutlineWidth: 6,
+    hoverBgColor: [255, 255, 255, 0.3],
+    hoverOutlineWidth: 5
   });
-
-  jumpButton.onTouchEnd(() => {
-    if (isJumpButtonPressed) {
-      isJumpButtonPressed = false;
-      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.2]);
-      jumpButton.scale = k.vec2(1);
-      jumpButton.outline.width = 4;
-      k.releaseButton("jump");
-    }
-  });
-
-  // Para mouse (útil para testes no desktop)
-  jumpButton.onMousePress(() => {
-    if (!isJumpButtonPressed) {
-      isJumpButtonPressed = true;
-      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.4]);
-      jumpButton.scale = k.vec2(0.9);
-      jumpButton.outline.width = 6;
-      k.pressButton("jump");
-      k.play("ring", { volume: 0.3 });
-    }
-  });
-
-  jumpButton.onMouseRelease(() => {
-    if (isJumpButtonPressed) {
-      isJumpButtonPressed = false;
-      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.2]);
-      jumpButton.scale = k.vec2(1);
-      jumpButton.outline.width = 4;
-      k.releaseButton("jump");
-    }
-  });
-
-  // Efeito hover para desktop
-  jumpButton.onHover(() => {
-    if (!isJumpButtonPressed) {
-      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.3]);
-      jumpButton.outline.width = 5;
-    }
-  });
-
-  jumpButton.onHoverEnd(() => {
-    if (!isJumpButtonPressed) {
-      jumpButton.color = k.Color.fromArray([255, 255, 255, 0.2]);
-      jumpButton.outline.width = 4;
-    }
-  });
-
-  // Detectar se é dispositivo touch e ajustar visibilidade
-  // Você pode querer sempre mostrar o botão ou ter uma lógica específica
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (!isMobile && !k.isTouchscreen()) {
-    // Se quiser esconder em desktop, descomente as linhas abaixo:
-    // jumpButton.opacity = 0;
-    // jumpButton.area.scale = k.vec2(0);
-  }
 
   // UI Elements
   // makeTextShadow();
@@ -711,6 +641,12 @@ export default function game() {
     k.body({ isStatic: true }),
     "platform",
   ]);
+
+  // Limpar recursos ao sair da cena
+  k.onSceneLeave(() => {
+    jumpButton.destroy();
+    gameControls.cleanup();
+  });
 
   // Update principal
   k.onUpdate(() => {
