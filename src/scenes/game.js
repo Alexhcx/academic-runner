@@ -6,6 +6,7 @@ import { makeNote } from "../entities/note";
 import { makeTextShadow } from "../scenes/components/textBackgroundShadow";
 import { makeGameControls } from "../scenes/components/gameControls";
 import { makeMobileJumpButton } from "./components/mobileButtons";
+import rankingView from "./components/rankingView";
 
 export default function game() {
   
@@ -65,6 +66,8 @@ export default function game() {
   let gameEndingStarted = false;
   let enemySpawnActive = true;
   let noteSpawnActive = true;
+
+  k.scene("ranking-view", rankingView)
   
   // Classe para gerenciar o background scrolling
   class BackgroundManager {
@@ -80,8 +83,7 @@ export default function game() {
     }
 
     init() {
-    makeTextShadow()
-//       console.log("BackgroundManager.init() - Iniciando...");
+      makeTextShadow()
       
       // Calcular largura da plataforma
       const tempPlat = k.add([
@@ -95,7 +97,6 @@ export default function game() {
       // Criar a primeira camada
       this.createLayer(0);
       this.initialized = true;
-//       console.log("BackgroundManager.init() - Completo");
     }
 
     createLayer(layerIndex) {
@@ -209,7 +210,7 @@ export default function game() {
       if (isTransitioning) return;
       
       // Verificar se chegou na fase "fim" (índice 4)
-      if (currentPhaseIndex === 4 && !gameEndingStarted) {
+      if (currentPhaseIndex === 3 && !gameEndingStarted) {
         gameEndingStarted = true;
         // Chamar a função handleGameEnding que está fora da classe
         handleGameEnding();
@@ -439,6 +440,7 @@ export default function game() {
     k.fixed(),
   ]);
 
+  // Botão de Main Menu
   const backButton = k.add([
     k.rect(172, 60, { radius: 8 }),
     k.color(0, 0, 0, 0.7),
@@ -467,6 +469,45 @@ export default function game() {
   backButton.onClick(() => {
     k.play("ring", { volume: 0.5 });
     k.go("main-menu");
+  });
+
+  // NOVO: Botão de Ranking ao lado do Main Menu
+  const rankingButton = k.add([
+    k.rect(150, 60, { radius: 8 }),
+    k.color(0, 0, 0, 0.7),
+    k.outline(4, k.Color.fromArray([255, 215, 0])), // Dourado
+    k.anchor("center"),
+    k.area(),
+    k.pos(1620, 40), // Posicionado à esquerda do Main Menu
+    k.fixed(),
+  ]);
+
+  rankingButton.add([
+    k.text("RANKING", { font: "mania", size: 32 }),
+    k.anchor("center"),
+  ]);
+
+  rankingButton.onHover(() => {
+    rankingButton.outline.width = 6;
+    rankingButton.color = k.Color.fromArray([0, 0, 0, 0.9]);
+  });
+
+  rankingButton.onHoverEnd(() => {
+    rankingButton.outline.width = 4;
+    rankingButton.color = k.Color.fromArray([0, 0, 0, 0.7]);
+  });
+
+  rankingButton.onClick(() => {
+    k.play("ring", { volume: 0.5 });
+    // Salvar estado atual do jogo antes de ir para o ranking
+    k.setData("game-state", {
+      score: averageScore,
+      notes: notesCollected,
+      zeroNotes: zeroNotesCount,
+      phase: currentPhaseIndex,
+      character: selectedCharacter
+    });
+    k.go("ranking-view"); // Você precisará criar esta cena
   });
 
   // Variáveis de pontuação
@@ -660,14 +701,14 @@ export default function game() {
       citySfx.paused = true;
     }
     
-      // Obter nome do personagem
-      const characterNames = {
-        "nicoly": "Nicoly",
-        "gleisla": "Gleisla",
-        "alexandre": "Alexandre",
-        "edvaldo": "Edvaldo",
-        "alberto": "Alberto",
-      };
+    // Obter nome do personagem
+    const characterNames = {
+      "nicoly": "Nicoly",
+      "gleisla": "Gleisla",
+      "alexandre": "Alexandre",
+      "edvaldo": "Edvaldo",
+      "alberto": "Alberto",
+    };
       
     const playerName = characterNames[selectedCharacter] || "Jogador";
     
@@ -679,14 +720,37 @@ export default function game() {
     // Iniciar sequência de final
     gameEnding.start(playerName, averageScore, (approved) => {
       console.log(`Final concluído - Aprovado: ${approved}`); // Debug
+      
+      // INTEGRAÇÃO COM RANKING: Salvar pontuação no ranking
+      let rankings = k.getData("rankings") || [];
+      
+      const newEntry = {
+        score: averageScore,
+        character: selectedCharacter,
+        characterName: playerName,
+        timestamp: Date.now(),
+        isGameEnding: true // Marca que veio do game ending
+      };
+      
+      rankings.push(newEntry);
+      
+      // Ordena e pega top 10
+      rankings = rankings
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+      
+      // Salva o ranking atualizado
+      k.setData("rankings", rankings);
+      
+      // Salva o score atual para uso na tela de gameover
+      k.setData("current-score", averageScore);
+      
       if (approved) {
-        // Aprovado - ir para cena final
-        k.setData("final-score", averageScore);
-        k.setData("notes-collected", notesCollected);
-        k.go("final"); // Você precisará criar esta cena
+        // Aprovado - ir para tela de gameover (que mostrará aprovado)
+        k.go("gameover");
       } else {
-        // Reprovado - reiniciar o jogo
-        k.go("game");
+        // Reprovado - ir para tela de gameover (que mostrará reprovado)
+        k.go("gameover");
       }
     });
   };
