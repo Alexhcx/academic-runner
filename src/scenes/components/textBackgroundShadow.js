@@ -1,14 +1,14 @@
 import k from "../../kaplayCtx";
 
 export function makeTextShadow() {
-  const backShadowDebugText = k.add([
-    k.rect(532, 32),
-    k.color(0, 0, 0, 0.7),
-    k.opacity(0.5),
-    k.anchor("center"),
-    k.area(),
-    k.pos(1645, 110),
-  ]);
+  // const backShadowDebugText = k.add([
+  //   k.rect(532, 32),
+  //   k.color(0, 0, 0, 0.7),
+  //   k.opacity(0.5),
+  //   k.anchor("center"),
+  //   k.area(),
+  //   k.pos(1645, 110),
+  // ]);
 
   const backShadowMedia = k.add([
     k.rect(320, 72, { radius: 5 }),
@@ -38,5 +38,5 @@ export function makeTextShadow() {
   //   k.pos(998, 45),
   // ]);
 
-  return backShadowDebugText, backShadowMedia, backShadowNote;
+  return backShadowMedia, backShadowNote;
 }

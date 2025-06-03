@@ -5,7 +5,6 @@ import gameover from "./scenes/gameover"
 import mainMenu from "./scenes/mainMenu"
 import characterSelect from "./scenes/characterSelect"
 
-// Add this global variable at the top of the file, after the imports
 let citySfx = null
 
 k.loadSprite("fase01-01", "graphics/fasesjpg/0101.jpg")
@@ -20,10 +19,12 @@ k.loadSprite("fase03-03", "graphics/fasesjpg/0303.jpg")
 k.loadSprite("fase04-01", "graphics/fasesjpg/0401.jpg")
 k.loadSprite("fase04-02", "graphics/fasesjpg/0402.jpg")
 k.loadSprite("fase04-03", "graphics/fasesjpg/0403.jpg")
+k.loadSprite("fim", "graphics/fasesjpg/fim.png")
 k.loadSprite("platforms", "graphics/fasesjpg/platforms.png")
 k.loadSprite("platforms02", "graphics/fasesjpg/platforms02.png")
 k.loadSprite("platforms03", "graphics/fasesjpg/platforms03.png")
 k.loadSprite("platforms04", "graphics/fasesjpg/platforms04.png")
+
 
 
 // Gleisla

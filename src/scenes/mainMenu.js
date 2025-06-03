@@ -8,35 +8,158 @@ export default function mainMenu() {
 
   k.setGravity(0)
 
-  const bgY = -26; 
-  const bgOpacity = 0.8; 
-  const bgScale = 2; 
-  const backgroundSpeed = 100;
+  // Background configuration (matching game.js)
+  const bgY = -26;
+  const bgOpacity = 0.8;
+  const bgScale = 2;
+  const platformY = 450;
+  const platformScale = 4;
 
-  const bg1 = k.add([
-    k.sprite("fase01-01"),
-    k.pos(0, bgY),
-    k.scale(bgScale),
-    k.opacity(bgOpacity),
-  ]);
-  // ATENÇÃO: Em game.js, actualBgWidth é bg1.width + 5720.
-  // Isso parece ser um valor específico para aquela cena ou imagem.
-  // Se "fase01" é para ser uma imagem contínua, actualBgWidth deve ser apenas bg1.width.
-  // Se houver um espaço ou uma razão para o +5720, você precisará replicar isso aqui ou ajustar.
-  // Para um loop contínuo padrão, usaremos bg1.width.
-  const actualBgWidth = bg1.width;
+  // Speed configuration
+  const backgroundSpeed = 200; // Slower for main menu
+  const platformSpeed = 300; // Platform speed
 
-  // Adiciona a segunda peça do background, posicionada à direita da primeira
-  const bg2 = k.add([
-    k.sprite("fase01-02"),
-    k.pos(actualBgWidth, bgY), // Posiciona logo após a primeira
-    k.scale(bgScale),
-    k.opacity(bgOpacity),
-  ]);
+  // Background Manager Class (simplified version of game.js)
+  class BackgroundManager {
+    constructor() {
+      this.bgPieces = [];
+      this.bgWidth = 1920 * bgScale; // Standard background width
+      this.scrollX = 0;
+      this.backgrounds = ["fase01-01", "fase01-02", "fase01-03"]; // Phase 1 backgrounds for menu
+    }
 
-  const backgroundPieces = [bg1, bg2];
+    init() {
+      // Create initial background pieces
+      let xPos = 0;
+      this.backgrounds.forEach((bgSprite, index) => {
+        const bg = k.add([
+          k.sprite(bgSprite),
+          k.pos(xPos, bgY),
+          k.scale(bgScale),
+          k.opacity(bgOpacity),
+          k.z(-100),
+          "background",
+          { index, originalX: xPos }
+        ]);
+        
+        this.bgPieces.push(bg);
+        xPos += this.bgWidth;
+      });
 
-  // Botões do menu
+      // Add copy of first background for seamless loop
+      const firstBgCopy = k.add([
+        k.sprite(this.backgrounds[0]),
+        k.pos(xPos, bgY),
+        k.scale(bgScale),
+        k.opacity(bgOpacity),
+        k.z(-100),
+        "background",
+        { index: this.backgrounds.length, originalX: xPos }
+      ]);
+      this.bgPieces.push(firstBgCopy);
+    }
+
+    update(speed) {
+      this.scrollX += speed;
+
+      // Update background positions
+      this.bgPieces.forEach(bg => {
+        if (bg.exists()) {
+          bg.pos.x = bg.originalX - this.scrollX;
+          
+          // Check if background piece went off screen and needs repositioning
+          if (bg.pos.x + this.bgWidth < 0) {
+            // Find the rightmost background piece
+            let rightmostX = Math.max(...this.bgPieces.map(piece => piece.originalX));
+            bg.originalX = rightmostX + this.bgWidth;
+            bg.pos.x = bg.originalX - this.scrollX;
+          }
+        }
+      });
+    }
+
+    destroy() {
+      this.bgPieces.forEach(bg => {
+        if (bg && bg.exists()) {
+          k.destroy(bg);
+        }
+      });
+      this.bgPieces = [];
+    }
+  }
+
+  // Platform Manager Class (simplified version)
+  class PlatformManager {
+    constructor() {
+      this.platformPieces = [];
+      this.platformWidth = 0;
+      this.scrollX = 0;
+    }
+
+    init() {
+      // Calculate platform width
+      const tempPlat = k.add([
+        k.sprite("platforms"),
+        k.scale(platformScale),
+        k.opacity(0)
+      ]);
+      this.platformWidth = tempPlat.width * platformScale;
+      k.destroy(tempPlat);
+
+      // Create initial platform pieces
+      const numPlatforms = Math.ceil(k.width() / this.platformWidth) + 2;
+      let xPos = 0;
+
+      for (let i = 0; i < numPlatforms; i++) {
+        const platform = k.add([
+          k.sprite("platforms"),
+          k.pos(xPos, platformY),
+          k.scale(platformScale),
+          k.z(-50),
+          "platform",
+          { index: i, originalX: xPos }
+        ]);
+        this.platformPieces.push(platform);
+        xPos += this.platformWidth;
+      }
+    }
+
+    update(speed) {
+      this.scrollX += speed;
+
+      // Update platform positions with seamless loop
+      this.platformPieces.forEach(platform => {
+        if (platform.exists()) {
+          platform.pos.x = platform.originalX - this.scrollX;
+          
+          // Reposition platform if it goes off screen
+          if (platform.pos.x + this.platformWidth < 0) {
+            const maxX = Math.max(...this.platformPieces.map(p => p.originalX));
+            platform.originalX = maxX + this.platformWidth;
+            platform.pos.x = platform.originalX - this.scrollX;
+          }
+        }
+      });
+    }
+
+    destroy() {
+      this.platformPieces.forEach(platform => {
+        if (platform && platform.exists()) {
+          k.destroy(platform);
+        }
+      });
+      this.platformPieces = [];
+    }
+  }
+
+  // Initialize managers
+  const bgManager = new BackgroundManager();
+  const platformManager = new PlatformManager();
+  
+  bgManager.init();
+  platformManager.init();
+
+  // Menu buttons
   const playButton = k.add([
     k.rect(400, 100, { radius: 8 }),
     k.color(0, 0, 0, 0.7),
@@ -61,7 +184,7 @@ export default function mainMenu() {
 
   selectCharButton.add([k.text("SELECIONAR PERSONAGEM", { font: "mania", size: 48 }), k.anchor("center"), k.pos(0, 4)])
 
-  // Eventos de clique
+  // Click events
   playButton.onClick(() => {
     k.play("jump", { volume: 0.5 })
     k.go("game")
@@ -72,7 +195,7 @@ export default function mainMenu() {
     k.go("character-select")
   })
 
-  // Efeitos hover
+  // Hover effects
   playButton.onHover(() => {
     playButton.outline.width = 6
     playButton.color = k.Color.fromArray([0, 0, 0, 0.9])
@@ -93,37 +216,24 @@ export default function mainMenu() {
     selectCharButton.color = k.Color.fromArray([0, 0, 0, 0.7])
   })
 
-  // Atalho de teclado
+  // Keyboard shortcut
   k.onButtonPress("jump", () => k.go("game"))
 
-  // Plataformas (a lógica de loop delas parece diferente e mais complexa,
-  // focando apenas no background por enquanto, conforme solicitado)
-  const platforms = [
-    k.add([k.sprite("platforms"), k.pos(0, 450), k.scale(4)]),
-    k.add([k.sprite("platforms"), k.pos(384, 450), k.scale(4)]),
-  ]
-
+  // Title
   k.add([k.text("ACADEMIC RUNNER", { font: "mania", size: 96 }), k.anchor("center"), k.pos(k.center().x, 200)])
 
-  // With this code to display all characters:
-  // Array of all available characters
+  // Character display
   const allCharacters = ["gleisla", "nicoly", "alexandre", "edvaldo", "alberto"]
   const selectedCharacter = k.getData("selected-character") || "gleisla"
 
-  // Create all characters and position them one in front of the other
-  const characterSpacing = 150 // Space between characters
-  const startX = 655 // Starting X position
-  const characterY = 741 // Y position for all characters
+  const characterSpacing = 150
+  const startX = 655
+  const characterY = 741
 
-  // Create an array to hold all character objects
   const menuPlayers = []
 
-  // Create each character
   allCharacters.forEach((charId, index) => {
-    // Position each character with spacing
     const charX = startX + index * characterSpacing
-
-    // Create the character
     const player = makePlayer(k.vec2(charX, characterY), charId)
 
     // Remove physics body to prevent falling
@@ -133,49 +243,22 @@ export default function mainMenu() {
 
     // Highlight the selected character
     if (charId === selectedCharacter) {
-      player.scaleTo = 4.5 // Make selected character slightly larger
+      player.scaleTo = 4.5
     }
 
     menuPlayers.push(player)
   })
 
-  // A constante gameSpeed não existe aqui, use backgroundSpeed para o parallax do fundo
-  // A velocidade das plataformas (-gameSpeed) no mainMenu.js original era muito alta (4000)
-  // Vou usar uma velocidade mais lenta para as plataformas também, ou você pode ajustar.
-  const platformLoopSpeed = 200; // Ajuste conforme necessário
+  // Cleanup function
+  k.onSceneLeave(() => {
+    bgManager.destroy();
+    platformManager.destroy();
+  });
 
+  // Main update loop
   k.onUpdate(() => {
-    // --- Loop do Background ---
-    for (const bg of backgroundPieces) {
-      bg.move(-backgroundSpeed, 0) // Usa a backgroundSpeed definida
-
-      if (bg.pos.x + actualBgWidth <= 0) {
-        // Move esta peça para a direita, após a outra peça.
-        // Como temos duas peças, ela se move duas larguras para frente de sua posição atual ANTES do reposicionamento.
-        // Ou, mais simples, a nova posição X é a posição X da outra peça + a largura da outra peça.
-        // Para garantir que funcione corretamente, encontramos a peça mais à direita e colocamos esta depois dela.
-        let rightmostX = -Infinity;
-        for (const otherBg of backgroundPieces) {
-            if (otherBg !== bg && otherBg.pos.x > rightmostX) {
-                rightmostX = otherBg.pos.x;
-            }
-        }
-        bg.pos.x = rightmostX + actualBgWidth;
-      }
-    }
-    // --- Fim do Loop do Background ---
-
-    // Lógica das plataformas (mantendo a original do mainMenu.js, mas com velocidade ajustada)
-    // Certifique-se de que platforms[0].width * 4 é a largura correta que você deseja usar para o loop.
-    // Em game.js, a largura da plataforma era platformWidth = platforms[0].width
-    const platformVisualWidth = platforms[0].width; // Usando a largura real da sprite escalada
-
-    platforms[0].move(-platformLoopSpeed, 0);
-    platforms[1].moveTo(platforms[0].pos.x + platformVisualWidth, 450);
-
-    if (platforms[0].pos.x + platformVisualWidth < 0) {
-        platforms[0].pos.x = platforms[1].pos.x + platformVisualWidth;
-        platforms.push(platforms.shift());
-    }
+    // Update background and platform managers
+    bgManager.update(backgroundSpeed * k.dt());
+    platformManager.update(platformSpeed * k.dt());
   })
 }

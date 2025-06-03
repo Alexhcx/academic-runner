@@ -1,8 +1,9 @@
-import k from "../kaplayCtx"
+import k from "../kaplayCtx";
 import { makeMobileJumpButton } from "./components/mobileButtons";
 
 export default function disclaimer() {
-  makeMobileJumpButton()
+  makeMobileJumpButton();
+
 
   k.add([
     k.text(
@@ -10,9 +11,9 @@ export default function disclaimer() {
         Esse jogo é um projeto da disciplina de FUNDAMENTOS DE JOGOS
         no curso de Análise e Desenvolvimento de Sistemas.
       `,
-      { font: "mania", size: 32 },
+      { font: "mania", size: 32 }
     ),
-  ])
+  ]);
 
   k.add([
     k.text("Aperte Espaço/Clique/Toque para jogar", {
@@ -21,7 +22,8 @@ export default function disclaimer() {
     }),
     k.anchor("center"),
     k.pos(k.center()),
-  ])
+  ]);
 
-  k.onButtonPress("jump", () => k.go("main-menu"))
+  k.onButtonPress("jump", () => k.go("main-menu"));
+
 }
