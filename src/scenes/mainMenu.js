@@ -15,7 +15,7 @@ export default function mainMenu() {
 
   // Adiciona a primeira peça do background para obter sua largura real (escalada)
   const bg1 = k.add([
-    k.sprite("fase01"),
+    k.sprite("fase01-01"),
     k.pos(0, bgY),
     k.scale(bgScale),
     k.opacity(bgOpacity),
@@ -25,19 +25,17 @@ export default function mainMenu() {
   // Se "fase01" é para ser uma imagem contínua, actualBgWidth deve ser apenas bg1.width.
   // Se houver um espaço ou uma razão para o +5720, você precisará replicar isso aqui ou ajustar.
   // Para um loop contínuo padrão, usaremos bg1.width.
-  const actualBgWidth = bg1.width + 5720;
+  const actualBgWidth = bg1.width;
 
   // Adiciona a segunda peça do background, posicionada à direita da primeira
   const bg2 = k.add([
-    k.sprite("fase01"),
+    k.sprite("fase01-02"),
     k.pos(actualBgWidth, bgY), // Posiciona logo após a primeira
     k.scale(bgScale),
     k.opacity(bgOpacity),
   ]);
 
-  // Array para gerenciar as peças do background
   const backgroundPieces = [bg1, bg2];
-  // --- Fim da lógica do Background ---
 
   // Botões do menu
   const playButton = k.add([

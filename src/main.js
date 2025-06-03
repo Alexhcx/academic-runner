@@ -8,15 +8,23 @@ import characterSelect from "./scenes/characterSelect"
 // Add this global variable at the top of the file, after the imports
 let citySfx = null
 
-// Carrega sprites dos personagens
-k.loadSprite("fase01", "graphics/fase01.png")
-k.loadSprite("fase02", "graphics/fase02.png")
-k.loadSprite("fase03", "graphics/fase03.png")
-k.loadSprite("fase04", "graphics/fase04.png")
-k.loadSprite("platforms", "graphics/platforms.png")
-k.loadSprite("platforms02", "graphics/platforms02.png")
-k.loadSprite("platforms03", "graphics/platforms03.png")
-k.loadSprite("platforms04", "graphics/platforms04.png")
+k.loadSprite("fase01-01", "graphics/fasesjpg/fase0101.jpg")
+k.loadSprite("fase01-02", "graphics/fasesjpg/fase0102.jpg")
+k.loadSprite("fase01-03", "graphics/fasesjpg/fase0103.jpg")
+k.loadSprite("fase02-01", "graphics/fasesjpg/fase0201.jpg")
+k.loadSprite("fase02-02", "graphics/fasesjpg/fase0202.jpg")
+k.loadSprite("fase02-03", "graphics/fasesjpg/fase0203.jpg")
+k.loadSprite("fase03-01", "graphics/fasesjpg/fase0301.jpg")
+k.loadSprite("fase03-02", "graphics/fasesjpg/fase0302.jpg")
+k.loadSprite("fase03-03", "graphics/fasesjpg/fase0303.jpg")
+k.loadSprite("fase04-01", "graphics/fasesjpg/fase0401.jpg")
+k.loadSprite("fase04-02", "graphics/fasesjpg/fase0402.jpg")
+k.loadSprite("fase04-03", "graphics/fasesjpg/fase0403.jpg")
+k.loadSprite("platforms", "graphics/fasesjpg/platforms.png")
+k.loadSprite("platforms02", "graphics/fasesjpg/platforms02.png")
+k.loadSprite("platforms03", "graphics/fasesjpg/platforms03.png")
+k.loadSprite("platforms04", "graphics/fasesjpg/platforms04.png")
+
 
 // Gleisla
 k.loadSprite("gleisla", "graphics/gleisla.png", {

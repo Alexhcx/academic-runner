@@ -23,11 +23,11 @@ export default function characterSelect() {
   const backgroundSpeed = 100 // Speed for background movement
 
   // Add the first background piece to get its actual width (scaled)
-  const bg1 = k.add([k.sprite("fase01"), k.pos(0, bgY), k.scale(bgScale), k.opacity(bgOpacity)])
+  const bg1 = k.add([k.sprite("fase01-01"), k.pos(0, bgY), k.scale(bgScale), k.opacity(bgOpacity)])
   const actualBgWidth = bg1.width + 5720
 
   // Add the second background piece, positioned to the right of the first
-  const bg2 = k.add([k.sprite("fase01"), k.pos(actualBgWidth, bgY), k.scale(bgScale), k.opacity(bgOpacity)])
+  const bg2 = k.add([k.sprite("fase01-01"), k.pos(actualBgWidth, bgY), k.scale(bgScale), k.opacity(bgOpacity)])
 
   // Array to manage background pieces
   const backgroundPieces = [bg1, bg2]

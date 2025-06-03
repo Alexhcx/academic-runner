@@ -6,6 +6,10 @@ import { makeTextShadow } from "../scenes/components/textBackgroundShadow";
 import { makeGameControls } from "../scenes/components/gameControls";
 
 export default function game() {
+  // Log para verificar o estado inicial
+  console.log("=== INICIANDO CENA GAME ===");
+  console.log("Cor de fundo do canvas:", k.getBackground());
+  
   const citySfx = window.gameSoundtrack;
   if (citySfx && citySfx.paused) {
     citySfx.paused = false;
@@ -16,422 +20,354 @@ export default function game() {
   const bgY = -26;
   const bgOpacity = 0.8;
   const bgScale = 2;
+  const platformY = 450;
+  const platformScale = 4;
 
   // Sistema de gerenciamento de cenários
-  const stages = [
+  const phases = [
     {
-      bg: "fase01",
-      platform: "platforms",
       name: "Fase 1",
+      backgrounds: ["fase01-01", "fase01-02", "fase01-03"],
+      platform: "platforms"
     },
     {
-      bg: "fase02",
-      platform: "platforms02",
-      name: "Fase 2",
+      name: "Fase 2", 
+      backgrounds: ["fase02-01", "fase02-02", "fase02-03"],
+      platform: "platforms02"
     },
     {
-      bg: "fase03",
-      platform: "platforms03",
       name: "Fase 3",
+      backgrounds: ["fase03-01", "fase03-02", "fase03-03"],
+      platform: "platforms03"
     },
     {
-      bg: "fase04",
-      platform: "platforms04",
       name: "Fase 4",
+      backgrounds: ["fase04-01", "fase04-02", "fase04-03"],
+      platform: "platforms04"
     }
   ];
 
-  let currentStageIndex = 0;
-  let stageRepeatCount = 0;
-  const maxRepeatsPerStage = 3;
-
-  // Variáveis para controle do fade
+  let currentPhaseIndex = 0;
   let isTransitioning = false;
+  
+  // Classe para gerenciar o background scrolling
+  class BackgroundManager {
+    constructor() {
+      this.bgPieces = [];
+      this.platformPieces = [];
+      this.currentPhase = phases[currentPhaseIndex];
+      this.bgWidth = 1920 * bgScale; // 1920 é a largura original da imagem
+      this.platformWidth = 0;
+      this.totalWidth = 0;
+      this.scrollX = 0;
+      this.initialized = false;
+    }
 
-  // Arrays para gerenciar as peças
-  let backgroundPieces = [];
-  let platforms = [];
-  let actualBgWidth = 0;
-  let actualPlatformWidth = 0;
+    init() {
+      console.log("BackgroundManager.init() - Iniciando...");
+      this.createInitialPieces();
+      this.initialized = true;
+      console.log("BackgroundManager.init() - Completo. Total de bgs:", this.bgPieces.length, "Total de plataformas:", this.platformPieces.length);
+    }
 
-  // CORREÇÃO 1: Criar player primeiro e garantir Z-index alto
+    createInitialPiecesWithOpacity(initialOpacity = bgOpacity) {
+      console.log("createInitialPiecesWithOpacity() - Iniciando com opacidade:", initialOpacity);
+      
+      // Limpar arrays
+      this.bgPieces = [];
+      this.platformPieces = [];
+
+      // Calcular largura da plataforma
+      const tempPlat = k.add([
+        k.sprite(this.currentPhase.platform),
+        k.scale(platformScale),
+        k.opacity(0)
+      ]);
+      this.platformWidth = tempPlat.width * platformScale;
+      k.destroy(tempPlat);
+
+      console.log("Larguras calculadas - bgWidth:", this.bgWidth, "platformWidth:", this.platformWidth);
+
+      // Criar todas as peças de background da fase em sequência
+      let xPos = 0;
+      this.currentPhase.backgrounds.forEach((bgSprite, index) => {
+        console.log(`Criando background ${index}: ${bgSprite} na posição X:${xPos} com opacidade:${initialOpacity}`);
+        
+        const bg = k.add([
+          k.sprite(bgSprite),
+          k.pos(xPos, bgY),
+          k.scale(bgScale),
+          k.opacity(initialOpacity),
+          k.z(-100),
+          "background",
+          { index, originalX: xPos }
+        ]);
+        
+        // Forçar visibilidade
+        // if (bg.visible !== undefined) {
+        //   bg.visible = true;
+        // }
+
+        bg.visible = true;
+        
+        console.log(`Background ${index} criado. Opacidade real:`, bg.opacity, "Visible:", bg.visible);
+        this.bgPieces.push(bg);
+        xPos += this.bgWidth;
+      });
+
+      // Adicionar uma cópia do primeiro background no final para loop seamless
+      const firstBgCopy = k.add([
+        k.sprite(this.currentPhase.backgrounds[0]),
+        k.pos(xPos, bgY),
+        k.scale(bgScale),
+        k.opacity(initialOpacity),
+        k.z(-100),
+        "background",
+        { index: this.currentPhase.backgrounds.length, originalX: xPos }
+      ]);
+      this.bgPieces.push(firstBgCopy);
+
+      this.totalWidth = this.bgWidth * this.currentPhase.backgrounds.length;
+      console.log("Total width calculado:", this.totalWidth);
+
+      // Criar plataformas suficientes para cobrir todo o percurso
+      const numPlatforms = Math.ceil(this.totalWidth / this.platformWidth) + 2;
+      xPos = 0;
+      const platOpacity = initialOpacity === 0 ? 0 : 1;
+      
+      console.log(`Criando ${numPlatforms} plataformas com opacidade:`, platOpacity);
+      
+      for (let i = 0; i < numPlatforms; i++) {
+        const platform = k.add([
+          k.sprite(this.currentPhase.platform),
+          k.pos(xPos, platformY),
+          k.scale(platformScale),
+          k.opacity(platOpacity),
+          k.z(-50),
+          "platform",
+          { index: i, originalX: xPos }
+        ]);
+        this.platformPieces.push(platform);
+        xPos += this.platformWidth;
+      }
+      
+      console.log("createInitialPiecesWithOpacity() - Completo. Bgs criados:", this.bgPieces.length);
+    }
+
+    createInitialPieces() {
+      console.log("createInitialPieces() - Chamando createInitialPiecesWithOpacity com bgOpacity:", bgOpacity);
+      this.createInitialPiecesWithOpacity(bgOpacity);
+    }
+
+    update(speed) {
+      if (!this.initialized || isTransitioning) return;
+
+      this.scrollX += speed;
+
+      // Verificar estado dos backgrounds periodicamente
+      if (Math.floor(this.scrollX) % 1000 === 0) {
+        console.log("UPDATE CHECK - scrollX:", this.scrollX, "bgPieces:", this.bgPieces.length);
+        if (this.bgPieces.length > 0 && this.bgPieces[0].exists()) {
+          console.log("  Primeiro BG - opacity:", this.bgPieces[0].opacity, "visible:", this.bgPieces[0].visible, "z:", this.bgPieces[0].z);
+        }
+      }
+
+      // Mover backgrounds
+      this.bgPieces.forEach(bg => {
+        if (bg.exists()) {
+          bg.pos.x = bg.originalX - this.scrollX;
+        }
+      });
+
+      // Mover plataformas com loop
+      this.platformPieces.forEach(platform => {
+        if (platform.exists()) {
+          platform.pos.x = platform.originalX - this.scrollX;
+          
+          // Se a plataforma saiu completamente da tela pela esquerda
+          if (platform.pos.x + this.platformWidth < 0) {
+            // Reposicionar no final
+            const maxX = Math.max(...this.platformPieces.map(p => p.originalX));
+            platform.originalX = maxX + this.platformWidth;
+            platform.pos.x = platform.originalX - this.scrollX;
+          }
+        }
+      });
+
+      // Verificar se completou o ciclo da fase atual
+      if (this.scrollX >= this.totalWidth) {
+        this.scrollX = 0;
+        this.onPhaseComplete();
+      }
+    }
+
+    async onPhaseComplete() {
+      // Passar para a próxima fase
+      const nextPhaseIndex = (currentPhaseIndex + 1) % phases.length;
+      
+      // Se voltou para a fase 1, significa que completou todas as fases
+      if (nextPhaseIndex === 0) {
+        console.log("Completou todas as fases! Reiniciando ciclo...");
+      }
+
+      console.log(`onPhaseComplete: Indo de ${currentPhaseIndex} para ${nextPhaseIndex}`);
+      await this.transitionToPhase(nextPhaseIndex);
+    }
+
+    async transitionToPhase(newPhaseIndex) {
+      if (isTransitioning) return;
+      isTransitioning = true;
+
+      const oldPhaseIndex = currentPhaseIndex;
+      currentPhaseIndex = newPhaseIndex;
+      
+      console.log(`\n=== INÍCIO DA TRANSIÇÃO ===`);
+      console.log(`Transição: ${phases[oldPhaseIndex].name} → ${phases[newPhaseIndex].name}`);
+      console.log(`bgOpacity global:`, bgOpacity);
+
+      // PASSO 1: Criar fade overlay preto
+      console.log("PASSO 1: Criando fade overlay...");
+      const fadeOverlay = k.add([
+        k.rect(k.width(), k.height()),
+        k.color(0, 0, 0),
+        k.opacity(0),
+        k.pos(0, 0),
+        k.z(900),
+        k.fixed()
+      ]);
+
+      // PASSO 2: Fade to black
+      console.log("PASSO 2: Fade to black...");
+      await new Promise(resolve => {
+        k.tween(0, 1, 0.5, (v) => {
+          if (fadeOverlay.exists()) fadeOverlay.opacity = v;
+        }, k.easings.easeInOutCubic).onEnd(() => {
+          console.log("Fade to black completo. Overlay opacity:", fadeOverlay.opacity);
+          resolve();
+        });
+      });
+
+      // PASSO 3: Destruir cenário antigo enquanto tela está preta
+      console.log("PASSO 3: Destruindo cenário antigo...");
+      console.log("Backgrounds antes da destruição:", this.bgPieces.length);
+      this.destroy();
+      console.log("Backgrounds após destruição:", this.bgPieces.length);
+
+      // PASSO 4: Criar novo cenário
+      console.log("PASSO 4: Criando novo cenário...");
+      this.currentPhase = phases[newPhaseIndex];
+      this.scrollX = 0;
+      console.log("Nova fase selecionada:", this.currentPhase.name);
+      console.log("bgOpacity antes de criar:", bgOpacity);
+      
+      this.createInitialPieces();
+      
+      console.log("Novo cenário criado. Total de bgs:", this.bgPieces.length);
+      console.log("Opacidades dos novos backgrounds:");
+      this.bgPieces.forEach((bg, i) => {
+        console.log(`  BG ${i}: opacity = ${bg.opacity}`);
+      });
+
+      // PASSO 5: Fade from black
+      console.log("PASSO 5: Fade from black...");
+      await new Promise(resolve => {
+        k.tween(1, 0, 0.5, (v) => {
+          if (fadeOverlay.exists()) fadeOverlay.opacity = v;
+        }, k.easings.easeInOutCubic).onEnd(() => {
+          console.log("Fade from black completo");
+          resolve();
+        });
+      });
+
+      // PASSO 6: Remover overlay
+      console.log("PASSO 6: Removendo overlay...");
+      k.destroy(fadeOverlay);
+
+      // TESTE: Criar um background de teste para verificar se backgrounds funcionam
+      console.log("TESTE: Criando background de teste vermelho...");
+      const testBg = k.add([
+        k.rect(200, 200),
+        k.color(255, 0, 0),
+        k.pos(100, 100),
+        k.opacity(0.5),
+        k.z(-99),
+        "test-bg"
+      ]);
+      
+      k.wait(2, () => {
+        console.log("Removendo background de teste");
+        k.destroy(testBg);
+      });
+
+      // Verificação final
+      console.log("VERIFICAÇÃO FINAL:");
+      console.log("Backgrounds existentes:", this.bgPieces.length);
+      this.bgPieces.forEach((bg, i) => {
+        if (bg.exists()) {
+          console.log(`  BG ${i}: existe = true, opacity = ${bg.opacity}, pos.x = ${bg.pos.x}, visible = ${bg.visible}`);
+        } else {
+          console.log(`  BG ${i}: existe = false`);
+        }
+      });
+
+      stageInfoText.text = this.currentPhase.name;
+      isTransitioning = false;
+      console.log(`=== FIM DA TRANSIÇÃO ===\n`);
+    }
+
+    destroy() {
+      console.log("destroy() - Iniciando destruição...");
+      console.log("Backgrounds a destruir:", this.bgPieces.length);
+      console.log("Plataformas a destruir:", this.platformPieces.length);
+      
+      // Destruir todos os backgrounds
+      this.bgPieces.forEach((bg, index) => {
+        if (bg && bg.exists()) {
+          console.log(`  Destruindo BG ${index}`);
+          bg.opacity = 0; // Garantir que fique invisível antes de destruir
+          k.destroy(bg);
+        }
+      });
+      
+      // Destruir todas as plataformas
+      this.platformPieces.forEach((platform, index) => {
+        if (platform && platform.exists()) {
+          console.log(`  Destruindo Platform ${index}`);
+          platform.opacity = 0; // Garantir que fique invisível antes de destruir
+          k.destroy(platform);
+        }
+      });
+      
+      // Limpar arrays
+      this.bgPieces = [];
+      this.platformPieces = [];
+      
+      console.log("destroy() - Completo");
+    }
+  }
+
+  // Criar manager de background
+  const bgManager = new BackgroundManager();
+  bgManager.init();
+
+  // Criar player
   const selectedCharacter = k.getData("selected-character") || "gleisla";
   const player = makePlayer(k.vec2(200, 745), selectedCharacter);
-
-  // Garantir que o player tenha z-index alto para ficar sempre na frente
   player.z = 1000;
-
   player.setControls();
   player.setEvents();
 
   const gameControls = makeGameControls();
   gameControls.init();
 
-  // VARIÁVEL CRÍTICA: Salvar referência original da opacidade do player
-  let playerOriginalOpacity = 1;
-
-  // GARANTIR que o player inicie com opacidade correta
-  if (player && player.opacity !== undefined) {
-    player.opacity = 1;
-    playerOriginalOpacity = 1;
-  }
-
-  // Função para obter o cenário atual
-  const getCurrentStage = () => stages[currentStageIndex];
-
-  // CORREÇÃO PRINCIPAL: Função melhorada para criar elementos com sincronização perfeita
-  const createSceneryElements = (isInitial = false) => {
-    // Pausar temporariamente a atualização do player durante a recriação
-    const wasPlayerFrozen = player.paused || false;
-
-    // Destruir elementos antigos se existirem
-    backgroundPieces.forEach((bg) => {
-      if (bg && bg.exists()) {
-        k.destroy(bg);
-      }
-    });
-
-    platforms.forEach((platform) => {
-      if (platform && platform.exists()) {
-        k.destroy(platform);
-      }
-    });
-
-    // Aguardar um frame para garantir que a destruição foi processada
-    k.wait(0, () => {
-      // Criar novos elementos do background com Z-index baixo
-      const initialOpacity = isInitial ? bgOpacity : 0;
-
-      const bg1 = k.add([
-        k.sprite(getCurrentStage().bg),
-        k.pos(0, bgY),
-        k.scale(bgScale),
-        k.opacity(initialOpacity),
-        k.z(-100),
-        "background_piece",
-      ]);
-
-      actualBgWidth = bg1.width + 5720;
-
-      const bg2 = k.add([
-        k.sprite(getCurrentStage().bg),
-        k.pos(actualBgWidth, bgY),
-        k.scale(bgScale),
-        k.opacity(initialOpacity),
-        k.z(-100),
-        "background_piece",
-      ]);
-
-      backgroundPieces = [bg1, bg2];
-
-      // CORREÇÃO: Criar plataformas com a MESMA lógica de posicionamento do background
-      const platformInitialOpacity = isInitial ? 1 : 0;
-
-      const platform1 = k.add([
-        k.sprite(getCurrentStage().platform),
-        k.pos(0, 450),
-        k.scale(4),
-        k.opacity(platformInitialOpacity),
-        k.z(-50),
-      ]);
-
-      // IMPORTANTE: Usar a mesma largura calculada do background
-      actualPlatformWidth = actualBgWidth; // Mesmo valor que o background
-
-      const platform2 = k.add([
-        k.sprite(getCurrentStage().platform),
-        k.pos(actualPlatformWidth, 450), // Usar a mesma largura do background
-        k.scale(4),
-        k.opacity(platformInitialOpacity),
-        k.z(-50),
-      ]);
-
-      platforms = [platform1, platform2];
-
-      // Reconfirmar Z-index do player após criar novos elementos
-      player.z = 1000;
-
-      console.log(
-        `Elementos criados - BG Width: ${actualBgWidth}, Platform Width: ${actualPlatformWidth}`
-      );
-      console.log(
-        `Elementos do cenário ${isInitial ? "iniciais" : "recriados"} para: ${
-          getCurrentStage().name
-        }`
-      );
-    });
-  };
-
-  // NOVA FUNÇÃO: Criar elementos sem fade (para repetições)
-  const createSceneryElementsWithoutFade = () => {
-    // Destruir elementos antigos se existirem
-    backgroundPieces.forEach((bg) => {
-      if (bg && bg.exists()) {
-        k.destroy(bg);
-      }
-    });
-
-    platforms.forEach((platform) => {
-      if (platform && platform.exists()) {
-        k.destroy(platform);
-      }
-    });
-
-    // Aguardar um frame para garantir que a destruição foi processada
-    k.wait(0, () => {
-      // Criar novos elementos do background com OPACIDADE TOTAL (sem fade)
-      const bg1 = k.add([
-        k.sprite(getCurrentStage().bg),
-        k.pos(0, bgY),
-        k.scale(bgScale),
-        k.opacity(bgOpacity), // Opacidade total desde o início
-        k.z(-100),
-        "background_piece",
-      ]);
-
-      actualBgWidth = bg1.width + 5720;
-
-      const bg2 = k.add([
-        k.sprite(getCurrentStage().bg),
-        k.pos(actualBgWidth, bgY),
-        k.scale(bgScale),
-        k.opacity(bgOpacity), // Opacidade total desde o início
-        k.z(-100),
-        "background_piece",
-      ]);
-
-      backgroundPieces = [bg1, bg2];
-
-      // Criar plataformas com OPACIDADE TOTAL (sem fade)
-      const platform1 = k.add([
-        k.sprite(getCurrentStage().platform),
-        k.pos(0, 450),
-        k.scale(4),
-        k.opacity(1), // Opacidade total desde o início
-        k.z(-50),
-      ]);
-
-      actualPlatformWidth = actualBgWidth;
-
-      const platform2 = k.add([
-        k.sprite(getCurrentStage().platform),
-        k.pos(actualPlatformWidth, 450),
-        k.scale(4),
-        k.opacity(1), // Opacidade total desde o início
-        k.z(-50),
-      ]);
-
-      platforms = [platform1, platform2];
-
-      // Reconfirmar Z-index do player após criar novos elementos
-      player.z = 1000;
-
-      console.log(
-        `Elementos recriados SEM FADE - BG Width: ${actualBgWidth}, Platform Width: ${actualPlatformWidth}`
-      );
-    });
-  };
-
-  // CORREÇÃO 3: Tweens mais seguros que não afetam outros objetos
-  const fadeOutScenery = (duration = 0.3) => {
-    return new Promise((resolve) => {
-      // Proteger player antes de iniciar tweens
-      const originalPlayerZ = player.z;
-      player.z = 1000;
-
-      // FORÇA a opacidade do player antes de começar
-      if (player && player.opacity !== undefined) {
-        playerOriginalOpacity = player.opacity;
-        player.opacity = 1;
-      }
-
-      let completedTweens = 0;
-      const totalTweens = backgroundPieces.length + platforms.length;
-
-      const onTweenComplete = () => {
-        completedTweens++;
-        if (completedTweens >= totalTweens) {
-          // Reconfirmar Z-index e opacidade do player
-          player.z = 1000;
-          if (player && player.opacity !== undefined) {
-            player.opacity = 1;
-          }
-          resolve();
-        }
-      };
-
-      // Fade out APENAS dos backgrounds específicos
-      backgroundPieces.forEach((bg, index) => {
-        if (bg && bg.exists()) {
-          const tween = k.tween(
-            bg.opacity,
-            0,
-            duration,
-            (val) => {
-              if (bg && bg.exists()) {
-                bg.opacity = val;
-              }
-              player.z = 1000;
-              if (player && player.opacity !== undefined) {
-                player.opacity = 1;
-              }
-            },
-            k.easings.easeOutQuad
-          );
-          tween.onEnd(() => {
-            player.z = 1000;
-            if (player && player.opacity !== undefined) {
-              player.opacity = 1;
-            }
-            onTweenComplete();
-          });
-        } else {
-          onTweenComplete();
-        }
-      });
-
-      // Fade out APENAS das plataformas específicas
-      platforms.forEach((platform, index) => {
-        if (platform && platform.exists()) {
-          const tween = k.tween(
-            platform.opacity,
-            0,
-            duration,
-            (val) => {
-              if (platform && platform.exists()) {
-                platform.opacity = val;
-              }
-              player.z = 1000;
-              if (player && player.opacity !== undefined) {
-                player.opacity = 1;
-              }
-            },
-            k.easings.easeOutQuad
-          );
-          tween.onEnd(() => {
-            player.z = 1000;
-            if (player && player.opacity !== undefined) {
-              player.opacity = 1;
-            }
-            onTweenComplete();
-          });
-        } else {
-          onTweenComplete();
-        }
-      });
-    });
-  };
-
-  const fadeInScenery = (duration = 0.3) => {
-    return new Promise((resolve) => {
-      // Proteger player antes de iniciar tweens
-      player.z = 1000;
-
-      // FORÇA a opacidade do player antes de começar
-      if (player && player.opacity !== undefined) {
-        player.opacity = 1;
-      }
-
-      let completedTweens = 0;
-      const totalTweens = backgroundPieces.length + platforms.length;
-
-      const onTweenComplete = () => {
-        completedTweens++;
-        if (completedTweens >= totalTweens) {
-          // Reconfirmar Z-index e opacidade do player
-          player.z = 1000;
-          if (player && player.opacity !== undefined) {
-            player.opacity = 1;
-          }
-          resolve();
-        }
-      };
-
-      // Fade in APENAS dos backgrounds específicos
-      backgroundPieces.forEach((bg, index) => {
-        if (bg && bg.exists()) {
-          const tween = k.tween(
-            0,
-            bgOpacity,
-            duration,
-            (val) => {
-              if (bg && bg.exists()) {
-                bg.opacity = val;
-              }
-              player.z = 1000;
-              if (player && player.opacity !== undefined) {
-                player.opacity = 1;
-              }
-            },
-            k.easings.easeInQuad
-          );
-          tween.onEnd(() => {
-            player.z = 1000;
-            if (player && player.opacity !== undefined) {
-              player.opacity = 1;
-            }
-            onTweenComplete();
-          });
-        } else {
-          onTweenComplete();
-        }
-      });
-
-      // Fade in APENAS das plataformas específicas
-      platforms.forEach((platform, index) => {
-        if (platform && platform.exists()) {
-          const tween = k.tween(
-            0,
-            1,
-            duration,
-            (val) => {
-              if (platform && platform.exists()) {
-                platform.opacity = val;
-              }
-              player.z = 1000;
-              if (player && player.opacity !== undefined) {
-                player.opacity = 1;
-              }
-            },
-            k.easings.easeInQuad
-          );
-          tween.onEnd(() => {
-            player.z = 1000;
-            if (player && player.opacity !== undefined) {
-              player.opacity = 1;
-            }
-            onTweenComplete();
-          });
-        } else {
-          onTweenComplete();
-        }
-      });
-    });
-  };
-
-  // **INICIALIZAÇÃO**: Criar elementos iniciais do cenário (visíveis desde o início)
-  createSceneryElements(true);
-
+  // UI Elements
   makeTextShadow();
-  // Debug text
-  const debugText = k.add([
-    k.text("", { font: "mania", size: 24 }),
-    k.pos(1390, 100),
-    k.color(255, 255, 255),
-    k.fixed(),
-  ]);
-
-  // Texto para mostrar informações do cenário atual
+  
   const stageInfoText = k.add([
-    k.text(
-      `${getCurrentStage().name} - Repetição: ${
-        stageRepeatCount + 1
-      }/${maxRepeatsPerStage}`,
-      {
-        font: "mania",
-        size: 36,
-      }
-    ),
+    k.text(phases[currentPhaseIndex].name, {
+      font: "mania",
+      size: 36,
+    }),
     k.pos(20, 140),
     k.fixed(),
   ]);
@@ -464,25 +400,28 @@ export default function game() {
     k.fixed(),
   ]);
 
-  // ADIÇÃO: Sistema de Game Over - Contador de notas zero
   let zeroNotesCount = 0;
   const maxZeroNotes = 5;
 
-  // Texto para mostrar o contador de notas zero
   const zeroNotesText = k.add([
     k.text("NOTAS ZERO: 0/5", { font: "mania", size: 36 }),
-    k.pos(20, 180), // Posicionado abaixo do texto de notas coletadas
-    k.color(255, 100, 100), // Cor vermelha para destacar o perigo
+    k.pos(20, 180),
+    k.color(255, 100, 100),
     k.fixed(),
   ]);
 
-  // ========================================
-  // Sistema de preview da próxima nota
-  // ========================================
-  let nextNoteValue = k.randi(0, 11); // Próxima nota que será gerada
-  let nextNoteAfterThat = k.randi(0, 11); // Nota após a próxima
+  // Debug info
+  const debugText = k.add([
+    k.text("", { font: "mania", size: 24 }),
+    k.pos(20, 220),
+    k.color(255, 255, 255),
+    k.fixed(),
+  ]);
 
-  // Preview visual da próxima nota
+  // Sistema de preview da próxima nota
+  let nextNoteValue = k.randi(0, 11);
+  let nextNoteAfterThat = k.randi(0, 11);
+
   let nextNotePreview = k.add([
     k.sprite(`note${nextNoteValue}`),
     k.pos(1000, 140),
@@ -545,9 +484,8 @@ export default function game() {
     k.destroy(note);
   });
 
-  // MODIFICAÇÃO: Sistema de colisão com inimigos com lógica de game over integrada
+  // Colisão com inimigos
   player.onCollide("enemy", (enemy) => {
-    // Se está pulando (não está no chão), mantém a lógica original
     if (!player.isGrounded()) {
       k.play("destroy", { volume: 0.5 });
       k.play("hyper-ring", { volume: 0.5 });
@@ -573,71 +511,50 @@ export default function game() {
       return;
     }
 
-    // LÓGICA ATUALIZADA: Se está correndo (no chão) - adiciona contador de notas zero
     k.play("hurt", { volume: 0.5 });
     k.destroy(enemy);
-
-    // Incrementar contador de notas zero
     zeroNotesCount++;
-
-    // Adicionar uma nota com valor 0
-    totalScore += 0; // Adiciona 0 ao score
+    totalScore += 0;
     notesCollected++;
     averageScore = notesCollected > 0 ? totalScore / notesCollected : 0;
 
-    // Atualizar textos de pontuação
     scoreText.text = `MÉDIA: ${averageScore.toFixed(1)}`;
     notesCollectedText.text = `NOTAS: ${notesCollected}`;
-
-    // Atualizar contador de notas zero com cores dinâmicas
     zeroNotesText.text = `NOTAS ZERO: ${zeroNotesCount}/${maxZeroNotes}`;
 
-    // Mudar cor conforme se aproxima do limite
     if (zeroNotesCount >= 4) {
-      zeroNotesText.color = k.Color.fromArray([255, 0, 0]); // Vermelho intenso
+      zeroNotesText.color = k.Color.fromArray([255, 0, 0]);
     } else if (zeroNotesCount >= 3) {
-      zeroNotesText.color = k.Color.fromArray([255, 165, 0]); // Laranja
+      zeroNotesText.color = k.Color.fromArray([255, 165, 0]);
     } else if (zeroNotesCount >= 2) {
-      zeroNotesText.color = k.Color.fromArray([255, 255, 0]); // Amarelo
+      zeroNotesText.color = k.Color.fromArray([255, 255, 0]);
     }
 
-    // Mostrar feedback visual da nota 0
     player.ringCollectUI.text = `+0`;
     k.wait(1, () => {
       player.ringCollectUI.text = "";
     });
 
-    // Reduzir velocidade do jogo em 10%
     gameSpeed = gameSpeed * 0.9;
-    console.log(`Velocidade reduzida para: ${Math.round(gameSpeed)}`);
 
-    // VERIFICAR GAME OVER
     if (zeroNotesCount >= maxZeroNotes) {
-      // Salvar dados para a tela de game over
       k.setData("current-score", averageScore);
-
-      // Parar música se estiver tocando
       if (citySfx && !citySfx.paused) {
         citySfx.paused = true;
       }
-
-      // Efeito sonoro de game over (se disponível)
       k.play("hurt", { volume: 0.8 });
-
-      // Ir para tela de game over após um pequeno delay
       k.wait(0.5, () => {
         k.go("gameover");
       });
-
       return;
     }
   });
 
-  // Ajusta a velocidade do jogo
+  // Velocidade do jogo
   let gameSpeed = 1200;
   k.loop(1, () => {
     if (gameSpeed < 5000) {
-      gameSpeed += 25;
+      gameSpeed += 50;
     }
   });
 
@@ -661,9 +578,8 @@ export default function game() {
 
   spawnMotoBug();
 
-  // MODIFICAÇÃO: Spawn de notas com sistema de preview
+  // Spawn de notas
   const spawnNote = () => {
-    // Usar o valor pré-definido da próxima nota
     const note = makeNote(
       k.vec2(k.width() + 50, k.randi(650, 745)),
       nextNoteValue
@@ -679,11 +595,9 @@ export default function game() {
       }
     });
 
-    // Atualizar o sistema de preview para a próxima nota
     nextNoteValue = nextNoteAfterThat;
     nextNoteAfterThat = k.randi(0, 11);
 
-    // Atualizar o sprite de preview
     if (nextNotePreview && nextNotePreview.exists()) {
       k.destroy(nextNotePreview);
     }
@@ -701,7 +615,7 @@ export default function game() {
 
   spawnNote();
 
-  // Plataforma de chão invisível
+  // Plataforma de chão
   k.add([
     k.rect(k.width(), 300),
     k.opacity(0),
@@ -711,192 +625,33 @@ export default function game() {
     "platform",
   ]);
 
-  // Sistema que só faz fade quando troca de cenário
-
-  // Substituir as variáveis de controle de distância:
-  let distanceTraveled = 0;
-  const distancePerRepetition = 11440;
-  let nextSwitchDistance = distancePerRepetition;
-
-  // CORREÇÃO: Variáveis de fade só para mudança de cenário real
-  let nextScenarioChangeDistance = distancePerRepetition * maxRepeatsPerStage; // Só após todas as repetições
-  const fadeStartOffset = 500;
-  let nextFadeStartDistance = nextScenarioChangeDistance - fadeStartOffset;
-  let isFading = false;
-
-  // Função corrigida switchToNextStage - VERSÃO COMPLETA CORRIGIDA:
-  const switchToNextStage = async () => {
-    if (isTransitioning) return;
-
-    isTransitioning = true;
-    stageRepeatCount++;
-
-    console.log(
-      `Transição iniciada - Repetição: ${stageRepeatCount}/${maxRepeatsPerStage}`
-    );
-
-    // GARANTIR que o player fique visível
-    player.z = 1000;
-    if (player && player.opacity !== undefined) {
-      player.opacity = 1;
-    }
-
-    // DECISÃO: Verificar se é troca de cenário ou apenas repetição
-    const isScenarioChange = stageRepeatCount >= maxRepeatsPerStage;
-
-    if (isScenarioChange) {
-      console.log(
-        `MUDANÇA DE CENÁRIO: ${getCurrentStage().name} → próximo cenário`
-      );
-
-      // APENAS na mudança de cenário: fazer fade out (se ainda não foi feito)
-      if (!isFading) {
-        await fadeOutScenery(0.2);
-      }
-
-      // Trocar para o próximo cenário
-      currentStageIndex = (currentStageIndex + 1) % stages.length;
-      stageRepeatCount = 0;
-
-      console.log(`Cenário trocado para: ${getCurrentStage().name}`);
-
-      // Recriar elementos para o novo cenário
-      createSceneryElements();
-
-      // Aguardar recriação
-      await k.wait(0.0);
-
-      // Garantir player na frente
-      player.z = 1000;
-      if (player && player.opacity !== undefined) {
-        player.opacity = 1;
-      }
-
-      // APENAS na mudança de cenário: fazer fade in
-      await fadeInScenery(0.4);
-      console.log(`Fade in completo para: ${getCurrentStage().name}`);
-    } else {
-      console.log(
-        `REPETIÇÃO do cenário: ${getCurrentStage().name} (${
-          stageRepeatCount + 1
-        }/${maxRepeatsPerStage})`
-      );
-
-      // Em repetições: SEM fade, apenas recriar elementos instantaneamente COM OPACIDADE TOTAL
-      createSceneryElementsWithoutFade();
-
-      // Aguardar recriação
-      await k.wait(0.02);
-
-      // Garantir player na frente
-      player.z = 1000;
-      if (player && player.opacity !== undefined) {
-        player.opacity = 1;
-      }
-    }
-
-    // Atualizar texto
-    stageInfoText.text = `${getCurrentStage().name} - Repetição: ${
-      stageRepeatCount + 1
-    }/${maxRepeatsPerStage}`;
-
-    // Garantir player visível
-    player.z = 1000;
-    if (player && player.opacity !== undefined) {
-      player.opacity = 1;
-    }
-
-    isFading = false;
-    isTransitioning = false;
-  };
-
-  // Lógica corrigida no onUpdate():
+  // Update principal
   k.onUpdate(() => {
     if (player.isGrounded()) scoreMultiplier = 0;
 
-    // Proteção do player
-    if (player.z !== 1000) {
-      player.z = 1000;
-    }
-    if (player && player.opacity !== undefined && player.opacity !== 1) {
-      player.opacity = 1;
-    }
-
     const backgroundSpeed = gameSpeed * 0.5;
-    distanceTraveled += backgroundSpeed * k.dt();
+    
+    // Atualizar o background manager
+    bgManager.update(backgroundSpeed * k.dt());
 
-    // CORREÇÃO: Fade antecipado APENAS quando está próximo de uma mudança real de cenário
-    const isNearScenarioChange = distanceTraveled >= nextFadeStartDistance;
-
-    if (isNearScenarioChange && !isFading && !isTransitioning) {
-      // Verificar se a próxima transição será realmente uma mudança de cenário
-      const nextRepetitionCount = stageRepeatCount + 1;
-      const willChangeScenario = nextRepetitionCount >= maxRepeatsPerStage;
-
-      if (willChangeScenario) {
-        isFading = true;
-        console.log(`Iniciando fade antecipado - MUDANÇA DE CENÁRIO em breve`);
-
-        fadeOutScenery(0.6).then(() => {
-          console.log("Fade out antecipado completo");
+    // Atualizar debug info
+    if (bgManager.initialized && !isTransitioning) {
+      const progress = (bgManager.scrollX / bgManager.totalWidth) * 100;
+      const currentBg = Math.floor(bgManager.scrollX / bgManager.bgWidth);
+      const bgName = phases[currentPhaseIndex].backgrounds[currentBg] || phases[currentPhaseIndex].backgrounds[0];
+      debugText.text = `Progresso: ${progress.toFixed(1)}% | Atual: ${bgName}`;
+    }
+    
+    // Verificar se há algo cobrindo os backgrounds (uma vez por segundo)
+    if (k.time() % 1 < 0.016) { // aproximadamente uma vez por segundo
+      const allObjects = k.get("*");
+      const objectsAboveBg = allObjects.filter(obj => obj.z > -100 && obj.z < 0);
+      if (objectsAboveBg.length > 0) {
+        console.log("AVISO: Objetos entre background e câmera:", objectsAboveBg.length);
+        objectsAboveBg.forEach(obj => {
+          console.log("  - Z:", obj.z, "Opacity:", obj.opacity, "Tags:", obj.tags);
         });
       }
-    }
-
-    // Fazer transição a cada distancePerRepetition (mas o fade só acontece quando necessário)
-    if (distanceTraveled >= nextSwitchDistance && !isTransitioning) {
-      switchToNextStage();
-
-      // Atualizar próxima distância de transição
-      nextSwitchDistance += distancePerRepetition;
-
-      // CORREÇÃO: Só atualizar distâncias de fade quando realmente for mudar cenário
-      const willChangeScenarioNext = stageRepeatCount + 1 >= maxRepeatsPerStage;
-      if (willChangeScenarioNext) {
-        nextScenarioChangeDistance =
-          nextSwitchDistance + distancePerRepetition * (maxRepeatsPerStage - 1);
-        nextFadeStartDistance = nextScenarioChangeDistance - fadeStartOffset;
-      }
-    }
-
-    // Movimento do cenário (sempre contínuo)
-    if (backgroundPieces.length >= 2 && platforms.length >= 2) {
-      const validBackgrounds = backgroundPieces.filter(
-        (bg) => bg && bg.exists()
-      );
-      const validPlatforms = platforms.filter(
-        (platform) => platform && platform.exists()
-      );
-
-      for (const bg of validBackgrounds) {
-        bg.move(-backgroundSpeed, 0);
-        if (bg.pos.x + actualBgWidth <= 0) {
-          bg.pos.x += 2 * actualBgWidth;
-        }
-      }
-
-      for (const platform of validPlatforms) {
-        platform.move(-backgroundSpeed, 0);
-        if (platform.pos.x + actualPlatformWidth <= 0) {
-          platform.pos.x += 2 * actualPlatformWidth;
-        }
-      }
-    }
-
-    // Debug melhorado
-    if (debugText) {
-      const nextRepetition = stageRepeatCount + 1;
-      const willChangeNext = nextRepetition >= maxRepeatsPerStage;
-      const status = isFading
-        ? "FADING"
-        : isTransitioning
-        ? "TRANSITIONING"
-        : "NORMAL";
-      const distanceToNext = Math.max(0, nextSwitchDistance - distanceTraveled);
-
-      debugText.text = `Speed: ${Math.round(gameSpeed)} | ${status} | Next: ${
-        willChangeNext ? "CHANGE" : "REPEAT"
-      } | Dist: ${Math.round(distanceToNext)}`;
     }
   });
 }
