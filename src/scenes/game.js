@@ -27,22 +27,22 @@ export default function game() {
   const phases = [
     {
       name: "Fase 1",
-      backgrounds: ["fase01-01", "fase01-02", "fase01-03"],
+      backgrounds: ["fase01-01", "fase01-02", "fase01-03","fase01-01", "fase01-02", "fase01-03","fase01-01", "fase01-02", "fase01-03"],
       platform: "platforms"
     },
     {
       name: "Fase 2", 
-      backgrounds: ["fase02-01", "fase02-02", "fase02-03"],
+      backgrounds: ["fase02-01", "fase02-02", "fase02-03,fase02-01", "fase02-02", "fase02-03,fase02-01", "fase02-02", "fase02-03"],
       platform: "platforms02"
     },
     {
       name: "Fase 3",
-      backgrounds: ["fase03-01", "fase03-02", "fase03-03"],
+      backgrounds: ["fase03-01", "fase03-02", "fase03-03,fase03-01", "fase03-02", "fase03-03,fase03-01", "fase03-02", "fase03-03"],
       platform: "platforms03"
     },
     {
       name: "Fase 4",
-      backgrounds: ["fase04-01", "fase04-02", "fase04-03"],
+      backgrounds: ["fase04-01", "fase04-02", "fase04-03,fase04-01", "fase04-02", "fase04-03,fase04-01", "fase04-02", "fase04-03"],
       platform: "platforms04"
     }
   ];
