@@ -26,6 +26,7 @@ k.loadSprite("platforms", "graphics/fasesjpg/platforms.png")
 k.loadSprite("platforms02", "graphics/fasesjpg/platforms02.png")
 k.loadSprite("platforms03", "graphics/fasesjpg/platforms03.png")
 k.loadSprite("platforms04", "graphics/fasesjpg/platforms04.png")
+k.loadSprite("qrcode","graphics/qrcode.png")
 
 // Gleisla
 k.loadSprite("gleisla", "graphics/gleisla.png", {

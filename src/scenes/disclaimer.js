@@ -1,8 +1,13 @@
 import k from "../kaplayCtx";
 
 export default function disclaimer() {
-
-
+  // Add QR Code
+  k.add([
+    k.sprite("qrcode"),
+    k.scale(0.3),
+    k.anchor("center"),
+    k.pos(k.center().x, k.center().y - 10),
+  ]);
 
   k.add([
     k.text(
@@ -20,9 +25,8 @@ export default function disclaimer() {
       size: 64,
     }),
     k.anchor("center"),
-    k.pos(k.center()),
+    k.pos(k.center().x, k.center().y + 450),
   ]);
 
   k.onButtonPress("jump", () => k.go("main-menu"));
-
 }
