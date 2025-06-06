@@ -653,7 +653,7 @@ export default function game() {
   const spawnMotoBug = () => {
     if (!enemySpawnActive) return; // Para de spawnar se o jogo acabou
     
-    const motobug = makeMotobug(k.vec2(k.width() + 50, 777));
+    const motobug = makeMotobug(k.vec2(k.width() + 50, 742));
     motobug.onUpdate(() => {
       const currentSpeed = gameSpeed;
       motobug.move(-(currentSpeed + 100), 0);
