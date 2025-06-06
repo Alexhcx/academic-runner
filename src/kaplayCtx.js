@@ -10,9 +10,10 @@ const k = kaplay({
     jump: {
       keyboard: ["space"],
       mouse: "left",
+      touch: true,
     },
   },
-  touchToMouse: false,
+  touchToMouse: true,
   debug: false,
 });
 

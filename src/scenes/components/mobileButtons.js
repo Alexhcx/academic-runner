@@ -47,8 +47,27 @@ export function makeMobileJumpButton(options = {}) {
   let button = null;
   let icon = null;
 
+  // Função melhorada para detectar dispositivos móveis
+  const isMobileDevice = () => {
+    // Verifica se é um dispositivo móvel
+    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Verifica se tem touchscreen
+    const touchCheck = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // Verifica o tamanho da tela (opcional, para tablets pequenos)
+    const screenCheck = window.innerWidth <= 1024;
+    
+    return mobileCheck && (touchCheck || screenCheck);
+  };
+
   // Criar o botão visual
   const create = () => {
+    // Só cria o botão se for dispositivo móvel
+    if (!isMobileDevice() && !config.alwaysVisible) {
+      return null;
+    }
+
     // Botão principal
     button = k.add([
       k.circle(config.radius),
@@ -72,14 +91,13 @@ export function makeMobileJumpButton(options = {}) {
     // Configurar eventos
     setupEvents();
 
-    // Verificar visibilidade
-    updateVisibility();
-
     return button;
   };
 
   // Configurar todos os eventos do botão
   const setupEvents = () => {
+    if (!button) return;
+
     // Touch events
     button.onTouchStart(() => {
       if (!isPressed) {
@@ -120,10 +138,35 @@ export function makeMobileJumpButton(options = {}) {
         button.outline.width = config.outlineWidth;
       }
     });
+
+    // Prevent touch events from propagating to other game elements
+    k.onTouchStart((id, pos) => {
+      if (button && button.exists()) {
+        const dx = pos.x - button.pos.x;
+        const dy = pos.y - button.pos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance <= config.radius) {
+          return true; // Consume the event
+        }
+      }
+    });
+
+    k.onTouchEnd((id, pos) => {
+      if (button && button.exists()) {
+        const dx = pos.x - button.pos.x;
+        const dy = pos.y - button.pos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance <= config.radius) {
+          return true; // Consume the event
+        }
+      }
+    });
   };
 
   // Lógica de pressionar o botão
   const handlePress = () => {
+    if (!button) return;
+    
     isPressed = true;
     
     // Visual feedback
@@ -147,6 +190,8 @@ export function makeMobileJumpButton(options = {}) {
 
   // Lógica de soltar o botão
   const handleRelease = () => {
+    if (!button) return;
+    
     isPressed = false;
     
     // Restaurar visual
@@ -160,18 +205,6 @@ export function makeMobileJumpButton(options = {}) {
     // Callback customizado
     if (config.onRelease) {
       config.onRelease();
-    }
-  };
-
-  // Atualizar visibilidade baseado no dispositivo
-  const updateVisibility = () => {
-    if (!config.alwaysVisible) {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isTouchscreen = k.isTouchscreen && k.isTouchscreen();
-      
-      if (!isMobile && !isTouchscreen) {
-        hide();
-      }
     }
   };
 

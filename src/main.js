@@ -5,6 +5,40 @@ import gameover from "./scenes/gameover"
 import mainMenu from "./scenes/mainMenu"
 import characterSelect from "./scenes/characterSelect"
 
+// Handle touch interactions properly
+const setupTouchHandling = () => {
+  // Prevent context menu on long press
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  
+  // Prevent pull to refresh
+  document.body.style.overscrollBehavior = 'none';
+  
+  // Prevent text selection
+  document.body.style.webkitTouchCallout = 'none';
+  document.body.style.webkitUserSelect = 'none';
+  document.body.style.userSelect = 'none';
+  
+  // Prevent scrolling
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.style.height = '100%';
+
+  // Prevent double tap zoom but allow single taps
+  let lastTap = 0;
+  document.addEventListener('touchend', (e) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    if (tapLength < 500 && tapLength > 0) {
+      e.preventDefault();
+    }
+    lastTap = currentTime;
+  });
+};
+
+// Call the function when the document is ready
+document.addEventListener('DOMContentLoaded', setupTouchHandling);
+
 let citySfx = null
 
 k.loadSprite("fase01-01", "graphics/fasesjpg/0101.jpg")
