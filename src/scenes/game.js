@@ -432,6 +432,7 @@ export default function game() {
   ]);
 
   // Inicializar Easy Mode com callback para atualizar preview
+  // Inicializar Easy Mode com callback para atualizar preview
   easyMode.init((isEnabled) => {
     // Atualizar o preview da nota quando o modo mudar
     if (nextNotePreview && nextNotePreview.exists()) {
@@ -445,6 +446,36 @@ export default function game() {
       k.fixed(),
     ]);
   });
+
+  // Mobile UI Event Listeners
+  const handleMobileJump = () => {
+    if (player && player.jump) {
+      player.jump();
+    }
+  };
+
+  const handleGoToMainMenu = () => {
+    k.play("ring", { volume: 0.5 });
+    k.go("main-menu");
+  };
+
+  const handleShowRanking = () => {
+    k.play("ring", { volume: 0.5 });
+    // Salvar estado atual do jogo antes de ir para o ranking
+    k.setData("game-state", {
+      score: averageScore,
+      notes: notesCollected,
+      zeroNotes: zeroNotesCount,
+      phase: currentPhaseIndex,
+      character: selectedCharacter
+    });
+    k.go("ranking-view");
+  };
+
+  // Add mobile event listeners
+  window.addEventListener('mobileJump', handleMobileJump);
+  window.addEventListener('goToMainMenu', handleGoToMainMenu);
+  window.addEventListener('showRanking', handleShowRanking);
 
   // Botão de Main Menu
   const backButton = k.add([

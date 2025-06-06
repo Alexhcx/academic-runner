@@ -397,8 +397,8 @@
     </div>
     
     <script>
-      // Mobile detection script - runs after body is loaded
-      (function() {
+ // Mobile detection script - runs after body is loaded
+ (function() {
         function detectMobile() {
           const userAgent = navigator.userAgent || navigator.vendor || window.opera;
           
@@ -448,6 +448,216 @@
           }
         });
       })();
+
+      // Global Easy Mode Management
+      window.EasyModeManager = (function() {
+        let isEnabled = false;
+        let callbacks = [];
+
+        // Load saved state from localStorage (or kaplay data when available)
+        function loadState() {
+          try {
+            const saved = localStorage.getItem('easy-mode');
+            if (saved !== null) {
+              isEnabled = JSON.parse(saved);
+            }
+          } catch (e) {
+            console.log('Could not load Easy Mode state from localStorage');
+          }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+          try {
+            localStorage.setItem('easy-mode', JSON.stringify(isEnabled));
+          } catch (e) {
+            console.log('Could not save Easy Mode state to localStorage');
+          }
+        }
+
+        // Initialize
+        loadState();
+
+        // Update mobile button appearance
+        function updateMobileButton() {
+          const mobileEasyButton = document.getElementById('easy-mode-button');
+          if (mobileEasyButton) {
+            mobileEasyButton.style.backgroundColor = isEnabled ? 'rgba(0, 100, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+            mobileEasyButton.style.borderColor = isEnabled ? 'rgba(0, 255, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
+          }
+        }
+
+        // Toggle Easy Mode
+        function toggle() {
+          isEnabled = !isEnabled;
+          saveState();
+          updateMobileButton();
+
+          // Notify all callbacks
+          callbacks.forEach(callback => {
+            try {
+              callback(isEnabled);
+            } catch (e) {
+              console.error('Error in Easy Mode callback:', e);
+            }
+          });
+
+          // Dispatch event for game components
+          window.dispatchEvent(new CustomEvent('easyModeToggled', {
+            detail: { isEasyMode: isEnabled }
+          }));
+
+          console.log(`Easy Mode ${isEnabled ? 'ATIVADO' : 'DESATIVADO'}`);
+        }
+
+        // Setup mobile button when DOM is ready
+        function setupMobileButton() {
+          const mobileEasyButton = document.getElementById('easy-mode-button');
+          if (mobileEasyButton) {
+            mobileEasyButton.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle();
+            });
+            updateMobileButton();
+          }
+        }
+
+        // Initialize mobile button
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupMobileButton);
+        } else {
+          setupMobileButton();
+        }
+
+        // Public API
+        return {
+          isEnabled: () => isEnabled,
+          toggle: toggle,
+          subscribe: (callback) => {
+            callbacks.push(callback);
+            // Return unsubscribe function
+            return () => {
+              const index = callbacks.indexOf(callback);
+              if (index > -1) {
+                callbacks.splice(index, 1);
+              }
+            };
+          },
+          updateMobileButton: updateMobileButton,
+          // Sync with kaplay data when available
+          syncWithKaplay: (kaplayData) => {
+            const kaplayEasyMode = kaplayData === true;
+            if (kaplayEasyMode !== isEnabled) {
+              isEnabled = kaplayEasyMode;
+              saveState();
+              updateMobileButton();
+            }
+          },
+          // Get state for kaplay
+          getStateForKaplay: () => isEnabled
+        };
+      })();
+
+      // Setup all mobile UI event listeners
+      document.addEventListener('DOMContentLoaded', function() {
+        // Jump button
+        const jumpButton = document.getElementById('jump-button');
+        if (jumpButton) {
+          jumpButton.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('mobileJump'));
+          });
+        }
+
+        // Music button
+        const musicButton = document.getElementById('music-button');
+        if (musicButton) {
+          musicButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('toggleMusic'));
+          });
+        }
+
+        // Sound button
+        const soundButton = document.getElementById('sound-button');
+        if (soundButton) {
+          soundButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('toggleSound'));
+          });
+        }
+
+        // Pause button
+        const pauseButton = document.getElementById('pause-button');
+        if (pauseButton) {
+          pauseButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('togglePause'));
+          });
+        }
+
+        // Back to game button
+        const backToGameButton = document.getElementById('back-to-game-button');
+        if (backToGameButton) {
+          backToGameButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('backToGame'));
+          });
+        }
+
+        // Character select button
+        const characterSelectButton = document.getElementById('character-select-button');
+        if (characterSelectButton) {
+          characterSelectButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('characterSelect'));
+          });
+        }
+
+        // Character navigation buttons
+        const charLeftButton = document.getElementById('char-left-button');
+        if (charLeftButton) {
+          charLeftButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('charLeft'));
+          });
+        }
+
+        const charRightButton = document.getElementById('char-right-button');
+        if (charRightButton) {
+          charRightButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('charRight'));
+          });
+        }
+
+        const charSelectButton = document.getElementById('char-select-button');
+        if (charSelectButton) {
+          charSelectButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('charSelect'));
+          });
+        }
+
+        // Ranking button
+        const rankingButton = document.getElementById('ranking-button');
+        if (rankingButton) {
+          rankingButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('showRanking'));
+          });
+        }
+
+        // Main menu button
+        const mainMenuButton = document.getElementById('main-menu-button');
+        if (mainMenuButton) {
+          mainMenuButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('goToMainMenu'));
+          });
+        }
+      });
     </script>
   </body>
 </html>

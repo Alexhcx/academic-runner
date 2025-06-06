@@ -2,10 +2,18 @@
 import k from "../../kaplayCtx";
 
 export function makeEasyMode() {
-  // Estado do Easy Mode
-  let isEnabled = k.getData('easy-mode') === true;
   let button = null;
   let onChangeCallback = null;
+  let unsubscribe = null;
+
+  // Função para obter o estado atual do Easy Mode
+  const isEnabled = () => {
+    if (window.EasyModeManager) {
+      return window.EasyModeManager.isEnabled();
+    }
+    // Fallback para kaplay data se o manager não estiver disponível
+    return k.getData('easy-mode') === true;
+  };
 
   // Função para criar o botão visual
   const createButton = (pos = { x: 1420, y: 40 }) => {
@@ -31,7 +39,7 @@ export function makeEasyMode() {
     // Eventos do botão
     button.onHover(() => {
       button.outline.width = 6;
-      button.color = isEnabled ? k.Color.fromArray([0, 120, 0, 0.9]) : k.Color.fromArray([0, 0, 0, 0.9]);
+      button.color = isEnabled() ? k.Color.fromArray([0, 120, 0, 0.9]) : k.Color.fromArray([0, 0, 0, 0.9]);
     });
 
     button.onHoverEnd(() => {
@@ -51,66 +59,86 @@ export function makeEasyMode() {
   const updateButtonAppearance = () => {
     if (!button || !button.exists()) return;
     
-    button.color = isEnabled ? k.Color.fromArray([0, 100, 0, 0.7]) : k.Color.fromArray([0, 0, 0, 0.7]);
-    button.outline.color = isEnabled ? k.Color.fromArray([0, 255, 0]) : k.Color.fromArray([255, 255, 255]);
+    const enabled = isEnabled();
+    button.color = enabled ? k.Color.fromArray([0, 100, 0, 0.7]) : k.Color.fromArray([0, 0, 0, 0.7]);
+    button.outline.color = enabled ? k.Color.fromArray([0, 255, 0]) : k.Color.fromArray([255, 255, 255]);
   };
 
   // Função para alternar o Easy Mode
   const toggle = () => {
-    isEnabled = !isEnabled;
-    k.setData('easy-mode', isEnabled);
+    if (window.EasyModeManager) {
+      window.EasyModeManager.toggle();
+    } else {
+      // Fallback para kaplay data
+      const newState = !isEnabled();
+      k.setData('easy-mode', newState);
+      updateButtonAppearance();
+      
+      if (onChangeCallback) {
+        onChangeCallback(newState);
+      }
+      
+      console.log(`Easy Mode ${newState ? 'ATIVADO' : 'DESATIVADO'}`);
+    }
+  };
+
+  // Event listener para mudanças vindas do mobile ou outros componentes
+  const handleEasyModeChange = (enabled) => {
+    // Sincronizar com kaplay data
+    k.setData('easy-mode', enabled);
+    
+    // Atualizar aparência do botão
     updateButtonAppearance();
-    updateMobileButton();
     
     // Chamar callback se existir
     if (onChangeCallback) {
-      onChangeCallback(isEnabled);
+      onChangeCallback(enabled);
     }
     
-    console.log(`Easy Mode ${isEnabled ? 'ATIVADO' : 'DESATIVADO'}`);
-  };
-
-  // Função para atualizar o botão mobile
-  const updateMobileButton = () => {
-    const mobileEasyButton = document.getElementById('easy-mode-button');
-    if (mobileEasyButton) {
-      mobileEasyButton.style.backgroundColor = isEnabled ? 'rgba(0, 100, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
-      mobileEasyButton.style.borderColor = isEnabled ? 'rgba(0, 255, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
-    }
-  };
-
-  // Event listener para mudanças vindas do mobile
-  const handleMobileToggle = (event) => {
-    isEnabled = event.detail.isEasyMode;
-    updateButtonAppearance();
-    
-    if (onChangeCallback) {
-      onChangeCallback(isEnabled);
-    }
-    
-    console.log('Easy Mode atualizado via mobile:', isEnabled);
+    console.log('Easy Mode atualizado:', enabled);
   };
 
   // Função de inicialização
   const init = (onChange = null) => {
     onChangeCallback = onChange;
     
+    // Sincronizar estado inicial
+    if (window.EasyModeManager) {
+      // Sincronizar kaplay data com o estado global
+      const globalState = window.EasyModeManager.isEnabled();
+      k.setData('easy-mode', globalState);
+      
+      // Se houver diferença, atualizar o manager global
+      const kaplayState = k.getData('easy-mode') === true;
+      if (globalState !== kaplayState) {
+        window.EasyModeManager.syncWithKaplay(kaplayState);
+      }
+      
+      // Subscrever para mudanças
+      unsubscribe = window.EasyModeManager.subscribe(handleEasyModeChange);
+      
+      // Atualizar botão mobile
+      window.EasyModeManager.updateMobileButton();
+    }
+    
     // Criar o botão
     createButton();
     
-    // Adicionar listener para eventos mobile
-    window.addEventListener('easyModeToggled', handleMobileToggle);
-    
-    // Sincronizar com o botão mobile inicial
-    updateMobileButton();
+    // Chamar callback inicial se existir
+    if (onChangeCallback) {
+      onChangeCallback(isEnabled());
+    }
     
     return button;
   };
 
   // Função de limpeza
   const cleanup = () => {
-    // Remover event listener
-    window.removeEventListener('easyModeToggled', handleMobileToggle);
+    // Cancelar subscrição
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
     
     // Destruir botão
     if (button && button.exists()) {
@@ -125,7 +153,7 @@ export function makeEasyMode() {
   return {
     init,
     cleanup,
-    isEnabled: () => isEnabled,
+    isEnabled,
     toggle,
     getButton: () => button,
     setPosition: (x, y) => {
