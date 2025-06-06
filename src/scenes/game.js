@@ -424,17 +424,17 @@ export default function game() {
   const zeroNotesText = k.add([
     k.text("NOTAS ZERO: 0/5", { font: "mania", size: 36 }),
     k.pos(20, 180),
-    k.color(255, 100, 100),
+    k.color(0, 255, 0),
     k.fixed(),
   ]);
 
   // Sistema de preview da próxima nota
+  let currentNoteValue = k.randi(0, 11);
   let nextNoteValue = k.randi(0, 11);
-  let nextNoteAfterThat = k.randi(0, 11);
 
   let nextNotePreview = k.add([
-    k.sprite(`note${nextNoteValue}`),
-    k.pos(1000, 140),
+    k.sprite(`note${currentNoteValue}`),
+    k.pos(1851, 162),
     k.anchor("center"),
     k.scale(1.5),
     k.fixed(),
@@ -517,7 +517,7 @@ export default function game() {
     k.outline(4, k.Color.fromArray([255, 255, 255])),
     k.anchor("center"),
     k.area(),
-    k.pos(1420, 40), // Posicionado à esquerda do botão de Ranking
+    k.pos(1420, 40), // Back to original position
     k.fixed(),
   ]);
 
@@ -606,12 +606,16 @@ export default function game() {
     notesCollectedText.text = `NOTAS: ${notesCollected}`;
     zeroNotesText.text = `NOTAS ZERO: ${zeroNotesCount}/${maxZeroNotes}`;
 
-    if (zeroNotesCount >= 4) {
-      zeroNotesText.color = k.Color.fromArray([255, 0, 0]);
+    if (zeroNotesCount >= 5) {
+      zeroNotesText.color = k.Color.fromArray([255, 0, 0]); // Red
+    } else if (zeroNotesCount >= 4) {
+      zeroNotesText.color = k.Color.fromArray([255, 165, 0]); // Orange
     } else if (zeroNotesCount >= 3) {
-      zeroNotesText.color = k.Color.fromArray([255, 165, 0]);
+      zeroNotesText.color = k.Color.fromArray([255, 255, 0]); // Yellow
     } else if (zeroNotesCount >= 2) {
-      zeroNotesText.color = k.Color.fromArray([255, 255, 0]);
+      zeroNotesText.color = k.Color.fromArray([0, 100, 0]); // Dark Green
+    } else if (zeroNotesCount >= 1) {
+      zeroNotesText.color = k.Color.fromArray([0, 255, 0]); // Green
     }
 
     player.ringCollectUI.text = `+0`;
@@ -670,7 +674,7 @@ export default function game() {
     
     const note = makeNote(
       k.vec2(k.width() + 50, k.randi(650, 745)),
-      isEasyMode ? 10 : nextNoteValue
+      isEasyMode ? 10 : currentNoteValue
     );
 
     note.onUpdate(() => {
@@ -683,16 +687,16 @@ export default function game() {
       }
     });
 
-    // Ajustar para modificar as notas randomicas
-    nextNoteValue = nextNoteAfterThat;
-    nextNoteAfterThat = isEasyMode ? 10 : k.randi(0, 11);
+    // Atualizar o preview com a próxima nota
+    currentNoteValue = nextNoteValue;
+    nextNoteValue = isEasyMode ? 10 : k.randi(0, 11);
 
     if (nextNotePreview && nextNotePreview.exists()) {
       k.destroy(nextNotePreview);
     }
     nextNotePreview = k.add([
-      k.sprite(`note${nextNoteValue}`),
-      k.pos(1000, 83),
+      k.sprite(`note${currentNoteValue}`),
+      k.pos(1851, 162),
       k.anchor("center"),
       k.scale(1.5),
       k.fixed(),

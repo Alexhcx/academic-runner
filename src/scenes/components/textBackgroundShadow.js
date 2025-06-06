@@ -26,7 +26,7 @@ export function makeTextShadow() {
     k.area(),
     k.anchor("center"),
     k.outline(2, k.Color.fromArray([255, 255, 255])),
-    k.pos(995, 80),
+    k.pos(1845, 160),
   ]);
 
   // const backShadowNextNote = k.add([
@@ -38,5 +38,32 @@ export function makeTextShadow() {
   //   k.pos(998, 45),
   // ]);
 
-  return backShadowMedia, backShadowNote;
+  // Shadow for stage info text
+  const backShadowStage = k.add([
+    k.rect(200, 38, { radius: 5 }),
+    k.color(0, 0, 0, 0.7),
+    k.opacity(0.5),
+    k.area(),
+    k.pos(8, 137),
+  ]);
+
+  // Shadow for notes collected text
+  const backShadowNotes = k.add([
+    k.rect(200, 38, { radius: 5 }),
+    k.color(0, 0, 0, 0.7),
+    k.opacity(0.5),
+    k.area(),
+    k.pos(8, 96),
+  ]);
+
+  // Shadow for zero notes text
+  const backShadowZeroNotes = k.add([
+    k.rect(280, 38, { radius: 5 }),
+    k.color(0, 0, 0, 0.7),
+    k.opacity(0.5),
+    k.area(),
+    k.pos(8, 178),
+  ]);
+
+  return backShadowMedia, backShadowNote, backShadowStage, backShadowNotes, backShadowZeroNotes;
 }
