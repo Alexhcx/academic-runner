@@ -649,6 +649,7 @@ export default function game() {
       }
     });
 
+    // Ajustar para modificar as notas randomicas
     nextNoteValue = nextNoteAfterThat;
     nextNoteAfterThat = k.randi(0, 11);
 

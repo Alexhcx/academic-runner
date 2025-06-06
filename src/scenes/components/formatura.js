@@ -22,7 +22,7 @@ export function makeGraduationEnding(k) {
   // Criar o background de formatura
   const createBackground = () => {
     return k.add([
-      k.sprite("fim"),
+      k.sprite("formatura"),
       k.anchor("center"),
       k.pos(k.center()),
       k.opacity(0),
@@ -42,7 +42,7 @@ export function makeGraduationEnding(k) {
       k.opacity(0),
       k.z(1520),
       k.fixed(),
-      k.scale(1), // Ajuste o scale se necessário
+      k.scale(4), // Ajuste o scale se necessário
       "graduation-formandos"
     ]);
   };
