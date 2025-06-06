@@ -510,11 +510,45 @@ export default function game() {
     k.go("ranking-view"); // Você precisará criar esta cena
   });
 
+  // Botão de Easy Mode
+  const easyModeButton = k.add([
+    k.rect(150, 60, { radius: 8 }),
+    k.color(0, 0, 0, 0.7),
+    k.outline(4, k.Color.fromArray([255, 255, 255])),
+    k.anchor("center"),
+    k.area(),
+    k.pos(1420, 40), // Posicionado à esquerda do botão de Ranking
+    k.fixed(),
+  ]);
+
+  easyModeButton.add([
+    k.text("EASY MODE", { font: "mania", size: 28 }),
+    k.anchor("center"),
+  ]);
+
+  easyModeButton.onHover(() => {
+    easyModeButton.outline.width = 6;
+    easyModeButton.color = k.Color.fromArray([0, 0, 0, 0.9]);
+  });
+
+  easyModeButton.onHoverEnd(() => {
+    easyModeButton.outline.width = 4;
+    easyModeButton.color = k.Color.fromArray([0, 0, 0, 0.7]);
+  });
+
+  easyModeButton.onClick(() => {
+    k.play("ring", { volume: 0.5 });
+    isEasyMode = !isEasyMode;
+    easyModeButton.color = isEasyMode ? k.Color.fromArray([0, 100, 0, 0.7]) : k.Color.fromArray([0, 0, 0, 0.7]);
+    easyModeButton.outline.color = isEasyMode ? k.Color.fromArray([0, 255, 0]) : k.Color.fromArray([255, 255, 255]);
+  });
+
   // Variáveis de pontuação
   let totalScore = 0;
   let notesCollected = 0;
   let averageScore = 0;
   let scoreMultiplier = 0;
+  let isEasyMode = false; // Nova variável para controlar o modo fácil
 
   // Colisão com notas
   player.onCollide("note", (note) => {
@@ -636,7 +670,7 @@ export default function game() {
     
     const note = makeNote(
       k.vec2(k.width() + 50, k.randi(650, 745)),
-      nextNoteValue
+      isEasyMode ? 10 : nextNoteValue
     );
 
     note.onUpdate(() => {
@@ -651,7 +685,7 @@ export default function game() {
 
     // Ajustar para modificar as notas randomicas
     nextNoteValue = nextNoteAfterThat;
-    nextNoteAfterThat = k.randi(0, 11);
+    nextNoteAfterThat = isEasyMode ? 10 : k.randi(0, 11);
 
     if (nextNotePreview && nextNotePreview.exists()) {
       k.destroy(nextNotePreview);

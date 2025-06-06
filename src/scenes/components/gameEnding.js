@@ -93,9 +93,13 @@ export function makeGameEnding(k) {
           }
         });
       } else {
-        // Se reprovado, finalizar direto
+        // Se reprovado, reiniciar o jogo
         if (onComplete) {
           onComplete(isApproved);
+          // Reiniciar o jogo após um pequeno delay
+          k.wait(1, () => {
+            k.go("game");
+          });
         }
       }
       return;
