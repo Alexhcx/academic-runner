@@ -237,6 +237,16 @@ class GameUI {
       if (jumpButton) {
         jumpButton.style.display = 'flex';
       }
+      
+      // Easy Mode button - só visível na cena do jogo
+      if (easyModeButton) {
+        easyModeButton.style.display = (currentScene === 'game') ? 'block' : 'none';
+      }
+      
+      // Ranking button - só visível na cena do jogo
+      if (rankingButton) {
+        rankingButton.style.display = (currentScene === 'game') ? 'block' : 'none';
+      }
     };
 
     // Update visibility when scene changes

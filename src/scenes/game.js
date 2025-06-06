@@ -5,6 +5,7 @@ import { makeMotobug } from "../entities/motobug";
 import { makeNote } from "../entities/note";
 import { makeTextShadow } from "../scenes/components/textBackgroundShadow";
 import { makeGameControls } from "../scenes/components/gameControls";
+import { makeEasyMode } from "../scenes/components/easyMode";
 
 import rankingView from "./components/rankingView";
 import { gameUI } from "../ui/gameUI";
@@ -16,6 +17,12 @@ export default function game() {
     citySfx.paused = false;
   }
   k.setGravity(3100);
+
+  // Define que estamos na cena do jogo
+  k.setData('current-scene', 'game');
+  
+  // Dispara evento para atualizar a UI
+  window.dispatchEvent(new Event('sceneChanged'));
 
   // Configurações do Background
   const bgY = -26;
@@ -361,6 +368,9 @@ export default function game() {
   const gameControls = makeGameControls();
   gameControls.init();
 
+  // Criar o componente Easy Mode
+  const easyMode = makeEasyMode();
+
   // UI Elements
   const stageInfoText = k.add([
     k.text(phases[currentPhaseIndex].name, {
@@ -414,12 +424,27 @@ export default function game() {
   let nextNoteValue = k.randi(0, 11);
 
   let nextNotePreview = k.add([
-    k.sprite(`note${currentNoteValue}`),
+    k.sprite(`note${easyMode.isEnabled() ? 10 : currentNoteValue}`),
     k.pos(1851, 162),
     k.anchor("center"),
     k.scale(1.5),
     k.fixed(),
   ]);
+
+  // Inicializar Easy Mode com callback para atualizar preview
+  easyMode.init((isEnabled) => {
+    // Atualizar o preview da nota quando o modo mudar
+    if (nextNotePreview && nextNotePreview.exists()) {
+      k.destroy(nextNotePreview);
+    }
+    nextNotePreview = k.add([
+      k.sprite(`note${isEnabled ? 10 : currentNoteValue}`),
+      k.pos(1851, 162),
+      k.anchor("center"),
+      k.scale(1.5),
+      k.fixed(),
+    ]);
+  });
 
   // Botão de Main Menu
   const backButton = k.add([
@@ -491,45 +516,11 @@ export default function game() {
     k.go("ranking-view"); // Você precisará criar esta cena
   });
 
-  // Botão de Easy Mode
-  const easyModeButton = k.add([
-    k.rect(150, 60, { radius: 8 }),
-    k.color(0, 0, 0, 0.7),
-    k.outline(4, k.Color.fromArray([255, 255, 255])),
-    k.anchor("center"),
-    k.area(),
-    k.pos(1420, 40), // Back to original position
-    k.fixed(),
-  ]);
-
-  easyModeButton.add([
-    k.text("EASY MODE", { font: "mania", size: 28 }),
-    k.anchor("center"),
-  ]);
-
-  easyModeButton.onHover(() => {
-    easyModeButton.outline.width = 6;
-    easyModeButton.color = k.Color.fromArray([0, 0, 0, 0.9]);
-  });
-
-  easyModeButton.onHoverEnd(() => {
-    easyModeButton.outline.width = 4;
-    easyModeButton.color = k.Color.fromArray([0, 0, 0, 0.7]);
-  });
-
-  easyModeButton.onClick(() => {
-    k.play("ring", { volume: 0.5 });
-    isEasyMode = !isEasyMode;
-    easyModeButton.color = isEasyMode ? k.Color.fromArray([0, 100, 0, 0.7]) : k.Color.fromArray([0, 0, 0, 0.7]);
-    easyModeButton.outline.color = isEasyMode ? k.Color.fromArray([0, 255, 0]) : k.Color.fromArray([255, 255, 255]);
-  });
-
   // Variáveis de pontuação
   let totalScore = 0;
   let notesCollected = 0;
   let averageScore = 0;
   let scoreMultiplier = 0;
-  let isEasyMode = false; // Nova variável para controlar o modo fácil
 
   // Colisão com notas
   player.onCollide("note", (note) => {
@@ -655,7 +646,7 @@ export default function game() {
     
     const note = makeNote(
       k.vec2(k.width() + 50, k.randi(650, 745)),
-      isEasyMode ? 10 : currentNoteValue
+      easyMode.isEnabled() ? 10 : currentNoteValue
     );
 
     note.onUpdate(() => {
@@ -670,13 +661,13 @@ export default function game() {
 
     // Atualizar o preview com a próxima nota
     currentNoteValue = nextNoteValue;
-    nextNoteValue = isEasyMode ? 10 : k.randi(0, 11);
+    nextNoteValue = easyMode.isEnabled() ? 10 : k.randi(0, 11);
 
     if (nextNotePreview && nextNotePreview.exists()) {
       k.destroy(nextNotePreview);
     }
     nextNotePreview = k.add([
-      k.sprite(`note${currentNoteValue}`),
+      k.sprite(`note${easyMode.isEnabled() ? 10 : currentNoteValue}`),
       k.pos(1851, 162),
       k.anchor("center"),
       k.scale(1.5),
@@ -777,6 +768,7 @@ export default function game() {
 
   // Limpar recursos ao sair da cena
   k.onSceneLeave(() => {
+    easyMode.cleanup(); // Limpar o componente Easy Mode
     gameUI.hide(); // Hide UI when leaving game scene
     gameControls.cleanup();
     bgManager.destroy();
