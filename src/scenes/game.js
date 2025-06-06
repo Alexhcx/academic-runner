@@ -5,8 +5,9 @@ import { makeMotobug } from "../entities/motobug";
 import { makeNote } from "../entities/note";
 import { makeTextShadow } from "../scenes/components/textBackgroundShadow";
 import { makeGameControls } from "../scenes/components/gameControls";
-import { makeMobileJumpButton } from "./components/mobileButtons";
+
 import rankingView from "./components/rankingView";
+import { gameUI } from "../ui/gameUI";
 
 export default function game() {
   
@@ -359,26 +360,6 @@ export default function game() {
 
   const gameControls = makeGameControls();
   gameControls.init();
-
-  // USAR O COMPONENTE DE BOTÃO MOBILE
-  const jumpButton = makeMobileJumpButton({
-    pos: { x: 120, y: k.height() - 120 },
-    radius: 60,
-    bgColor: [255, 255, 255, 0.2],
-    outlineColor: [255, 255, 255, 0.6],
-    outlineWidth: 4,
-    text: "↑",
-    textSize: 48,
-    textColor: [255, 255, 255, 0.8],
-    zIndex: 2000,
-    buttonName: "jump",
-    soundName: "ring",
-    soundVolume: 0.3,
-    pressedBgColor: [255, 255, 255, 0.4],
-    pressedOutlineWidth: 6,
-    hoverBgColor: [255, 255, 255, 0.3],
-    hoverOutlineWidth: 5
-  });
 
   // UI Elements
   const stageInfoText = k.add([
@@ -796,10 +777,10 @@ export default function game() {
 
   // Limpar recursos ao sair da cena
   k.onSceneLeave(() => {
-    jumpButton.destroy();
+    gameUI.hide(); // Hide UI when leaving game scene
     gameControls.cleanup();
     bgManager.destroy();
-    gameEnding.cleanup(); // Limpar game ending
+    gameEnding.cleanup();
   });
 
   // Update principal

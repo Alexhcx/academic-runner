@@ -3,10 +3,315 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Academic Runner</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        position: fixed;
+        background: #000;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      canvas {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      #ui-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1000;
+        display: block !important; /* Force display */
+      }
+
+      /* Mobile Controls */
+      .mobile-controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+        pointer-events: auto;
+      }
+
+      .mobile-button {
+        width: 60px;
+        height: 60px;
+        background: rgba(0, 0, 0, 0.7);
+        border: 3px solid rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: 'mania', sans-serif;
+        font-size: 24px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: all 0.1s ease;
+      }
+
+      .mobile-button:active {
+        transform: scale(0.95);
+        background: rgba(0, 0, 0, 0.9);
+        border-color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Game Menu Buttons */
+      .game-menu {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+        pointer-events: auto;
+      }
+
+      .menu-button {
+        padding: 10px 20px;
+        background: rgba(0, 0, 0, 0.7);
+        border: 3px solid rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        color: white;
+        font-family: 'mania', sans-serif;
+        font-size: 24px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: all 0.1s ease;
+      }
+
+      .menu-button:active {
+        transform: scale(0.95);
+        background: rgba(0, 0, 0, 0.9);
+        border-color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Jump Button */
+      .jump-button {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 4px solid rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: 'mania', sans-serif;
+        font-size: 48px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: all 0.1s ease;
+        pointer-events: auto;
+      }
+
+      .jump-button:active {
+        transform: scale(0.95);
+        background: rgba(255, 255, 255, 0.4);
+        border-color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .game-menu {
+          flex-direction: column;
+          right: 10px;
+          top: 10px;
+        }
+
+        .menu-button {
+          padding: 8px 16px;
+          font-size: 20px;
+        }
+
+        .mobile-controls {
+          bottom: 10px;
+          right: 10px;
+        }
+
+        .mobile-button {
+          width: 50px;
+          height: 50px;
+          font-size: 20px;
+        }
+
+        .jump-button {
+          width: 100px;
+          height: 100px;
+          font-size: 40px;
+          bottom: 10px;
+          left: 10px;
+        }
+      }
+
+      /* Landscape Mode */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .game-menu {
+          flex-direction: row;
+          top: 5px;
+          right: 5px;
+        }
+
+        .menu-button {
+          padding: 5px 10px;
+          font-size: 16px;
+        }
+
+        .mobile-controls {
+          bottom: 5px;
+          right: 5px;
+        }
+
+        .mobile-button {
+          width: 40px;
+          height: 40px;
+          font-size: 16px;
+        }
+
+        .jump-button {
+          width: 80px;
+          height: 80px;
+          font-size: 32px;
+          bottom: 5px;
+          left: 5px;
+        }
+      }
+
+      /* Character Selection Controls */
+      .character-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 20px;
+        pointer-events: auto;
+        z-index: 1001;
+      }
+
+      .character-controls .mobile-button {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+        background: rgba(0, 0, 0, 0.7);
+        border: 3px solid rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: all 0.1s ease;
+      }
+
+      .character-controls .mobile-button:active {
+        transform: scale(0.95);
+        background: rgba(0, 0, 0, 0.9);
+        border-color: rgba(255, 255, 255, 0.8);
+      }
+
+      .character-controls #char-select-button {
+        width: 120px;
+        font-size: 24px;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .character-controls {
+          bottom: 10px;
+        }
+
+        .character-controls .mobile-button {
+          width: 60px;
+          height: 60px;
+          font-size: 24px;
+        }
+
+        .character-controls #char-select-button {
+          width: 100px;
+          font-size: 20px;
+        }
+      }
+
+      /* Landscape Mode */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .character-controls {
+          bottom: 5px;
+        }
+
+        .character-controls .mobile-button {
+          width: 50px;
+          height: 50px;
+          font-size: 20px;
+        }
+
+        .character-controls #char-select-button {
+          width: 80px;
+          font-size: 16px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <script type="module" src="src/main.js"></script>
+    <div id="game-container">
+      <script type="module" src="src/main.js"></script>
+      <div id="ui-layer">
+        <!-- Mobile Controls -->
+        <div class="mobile-controls">
+          <button class="mobile-button" id="music-button">♪</button>
+          <button class="mobile-button" id="sound-button">🔊</button>
+          <button class="mobile-button" id="pause-button">⏸</button>
+        </div>
+
+        <!-- Game Menu -->
+        <div class="game-menu">
+          <button class="menu-button" id="back-to-game-button">BACK TO GAME</button>
+          <button class="menu-button" id="character-select-button">SELECT CHARACTER</button>
+          <button class="menu-button" id="ranking-button">RANKING</button>
+          <button class="menu-button" id="easy-mode-button">EASY MODE</button>
+          <button class="menu-button" id="main-menu-button">MAIN MENU</button>
+        </div>
+
+        <!-- Character Selection Controls -->
+        <div class="character-controls">
+          <button class="mobile-button" id="char-left-button">←</button>
+          <button class="mobile-button" id="char-select-button">SELECT</button>
+          <button class="mobile-button" id="char-right-button">→</button>
+        </div>
+
+        <!-- Jump Button -->
+        <button class="jump-button" id="jump-button">↑</button>
+      </div>
+    </div>
   </body>
 </html>

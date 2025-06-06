@@ -4,6 +4,7 @@ import game from "./scenes/game"
 import gameover from "./scenes/gameover"
 import mainMenu from "./scenes/mainMenu"
 import characterSelect from "./scenes/characterSelect"
+import { gameUI } from "./ui/gameUI"
 
 // Handle touch interactions properly
 const setupTouchHandling = () => {
@@ -36,8 +37,27 @@ const setupTouchHandling = () => {
   });
 };
 
+// Initialize UI and handle orientation changes
+const initializeUI = () => {
+  setupTouchHandling();
+  gameUI.show();
+
+  // Handle orientation changes
+  window.addEventListener('orientationchange', () => {
+    // Small delay to ensure proper orientation detection
+    setTimeout(() => {
+      gameUI.updateUIForOrientation();
+    }, 100);
+  });
+
+  // Update UI when scene changes
+  k.onSceneEnter(() => {
+    gameUI.updateButtonStates();
+  });
+};
+
 // Call the function when the document is ready
-document.addEventListener('DOMContentLoaded', setupTouchHandling);
+document.addEventListener('DOMContentLoaded', initializeUI);
 
 let citySfx = null
 

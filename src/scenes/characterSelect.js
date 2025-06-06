@@ -268,6 +268,33 @@ export default function characterSelect() {
     k.play("ring", { volume: 0.3 })
   })
 
+  // Mobile button handlers
+  const charLeftButton = document.getElementById('char-left-button');
+  const charRightButton = document.getElementById('char-right-button');
+  const charSelectButton = document.getElementById('char-select-button');
+
+  if (charLeftButton) {
+    charLeftButton.addEventListener('click', () => {
+      currentSelection = (currentSelection - 1 + characters.length) % characters.length;
+      updateCharacterDisplay();
+      k.play("ring", { volume: 0.3 });
+    });
+  }
+
+  if (charRightButton) {
+    charRightButton.addEventListener('click', () => {
+      currentSelection = (currentSelection + 1) % characters.length;
+      updateCharacterDisplay();
+      k.play("ring", { volume: 0.3 });
+    });
+  }
+
+  if (charSelectButton) {
+    charSelectButton.addEventListener('click', () => {
+      selectCharacter();
+    });
+  }
+
   // Cancela o evento de pulo padrão para evitar iniciar o jogo ao clicar
   const jumpAction = k.onButtonPress("jump", () => {
     if (allowJumpToStart) {

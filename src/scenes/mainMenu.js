@@ -1,9 +1,8 @@
 import k from "../kaplayCtx"
 import { makePlayer } from "../entities/player"
-import { makeMobileJumpButton } from "./components/mobileButtons";
 
 export default function mainMenu() {
-  makeMobileJumpButton()
+
   if (!k.getData("best-score")) k.setData("best-score", 0)
 
   k.setGravity(0)
