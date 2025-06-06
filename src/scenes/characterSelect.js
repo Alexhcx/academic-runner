@@ -255,6 +255,68 @@ export default function characterSelect() {
     characterSprite.use(k.sprite(character.id, { anim: "run" }))
   }
 
+  // Mobile controls setup - MELHORADO
+  const setupMobileControls = () => {
+    // Notifica a UI que estamos na cena de seleção de personagem
+    k.setData('current-scene', 'character-select');
+    
+    // Força a atualização da visibilidade dos botões
+    window.dispatchEvent(new Event('sceneChanged'));
+    
+    // Espera um pouco para garantir que o DOM está pronto
+    k.wait(0.1, () => {
+      const charLeftButton = document.getElementById('char-left-button');
+      const charRightButton = document.getElementById('char-right-button');
+      const charSelectButton = document.getElementById('char-select-button');
+
+      // Garante que os botões estão visíveis
+      const characterControls = document.querySelector('.character-controls');
+      if (characterControls) {
+        characterControls.style.display = 'flex';
+      }
+
+      if (charLeftButton) {
+        charLeftButton.style.display = 'flex';
+        // Remove listeners antigos para evitar duplicação
+        const newLeftButton = charLeftButton.cloneNode(true);
+        charLeftButton.parentNode.replaceChild(newLeftButton, charLeftButton);
+        
+        newLeftButton.onclick = () => {
+          currentSelection = (currentSelection - 1 + characters.length) % characters.length;
+          updateCharacterDisplay();
+          k.play("ring", { volume: 0.3 });
+        };
+      }
+
+      if (charRightButton) {
+        charRightButton.style.display = 'flex';
+        // Remove listeners antigos para evitar duplicação
+        const newRightButton = charRightButton.cloneNode(true);
+        charRightButton.parentNode.replaceChild(newRightButton, charRightButton);
+        
+        newRightButton.onclick = () => {
+          currentSelection = (currentSelection + 1) % characters.length;
+          updateCharacterDisplay();
+          k.play("ring", { volume: 0.3 });
+        };
+      }
+
+      if (charSelectButton) {
+        charSelectButton.style.display = 'flex';
+        // Remove listeners antigos para evitar duplicação
+        const newSelectButton = charSelectButton.cloneNode(true);
+        charSelectButton.parentNode.replaceChild(newSelectButton, charSelectButton);
+        
+        newSelectButton.onclick = () => {
+          selectCharacter();
+        };
+      }
+    });
+  };
+
+  // CHAMA A FUNÇÃO DE SETUP DOS CONTROLES MOBILE
+  setupMobileControls();
+
   // Navegação com teclado
   k.onKeyPress("left", () => {
     currentSelection = (currentSelection - 1 + characters.length) % characters.length
@@ -268,32 +330,7 @@ export default function characterSelect() {
     k.play("ring", { volume: 0.3 })
   })
 
-  // Mobile button handlers
-  const charLeftButton = document.getElementById('char-left-button');
-  const charRightButton = document.getElementById('char-right-button');
-  const charSelectButton = document.getElementById('char-select-button');
-
-  if (charLeftButton) {
-    charLeftButton.addEventListener('click', () => {
-      currentSelection = (currentSelection - 1 + characters.length) % characters.length;
-      updateCharacterDisplay();
-      k.play("ring", { volume: 0.3 });
-    });
-  }
-
-  if (charRightButton) {
-    charRightButton.addEventListener('click', () => {
-      currentSelection = (currentSelection + 1) % characters.length;
-      updateCharacterDisplay();
-      k.play("ring", { volume: 0.3 });
-    });
-  }
-
-  if (charSelectButton) {
-    charSelectButton.addEventListener('click', () => {
-      selectCharacter();
-    });
-  }
+  // CÓDIGO DUPLICADO REMOVIDO - não precisa mais dos event listeners aqui
 
   // Cancela o evento de pulo padrão para evitar iniciar o jogo ao clicar
   const jumpAction = k.onButtonPress("jump", () => {

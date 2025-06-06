@@ -35,6 +35,7 @@
         transform: translate(-50%, -50%);
       }
 
+      /* UI Layer - Hidden by default */
       #ui-layer {
         position: absolute;
         top: 0;
@@ -43,7 +44,12 @@
         height: 100%;
         pointer-events: none;
         z-index: 1000;
-        display: block !important; /* Force display */
+        display: none; /* Hidden by default */
+      }
+
+      /* Show UI only on mobile devices */
+      body.is-mobile #ui-layer {
+        display: block;
       }
 
       /* Mobile Controls */
@@ -113,10 +119,9 @@
       /* Jump Button */
       .jump-button {
         position: absolute;
-        bottom: 20px;
-        left: 20px;
-        width: 120px;
-        height: 120px;
+        transform: translateX(53%);
+        width: 150px;
+        height: 150px;
         background: rgba(255, 255, 255, 0.2);
         border: 4px solid rgba(255, 255, 255, 0.6);
         border-radius: 50%;
@@ -131,6 +136,7 @@
         -webkit-user-select: none;
         transition: all 0.1s ease;
         pointer-events: auto;
+        padding-bottom: 10px;
       }
 
       .jump-button:active {
@@ -142,9 +148,26 @@
       /* Responsive Design */
       @media (max-width: 768px) {
         .game-menu {
-          flex-direction: column;
+          position: relative;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
           right: 10px;
           top: 10px;
+          margin-right: 10px;
+          margin-left: 10px;
+        }
+        .game-menu-right {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .game-menu-left {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
 
         .menu-button {
@@ -175,14 +198,70 @@
       /* Landscape Mode */
       @media (max-height: 500px) and (orientation: landscape) {
         .game-menu {
+          position: relative;
+          justify-content: space-between;
+          margin-left: 20px;
+          margin-right: 20px;
           flex-direction: row;
           top: 5px;
           right: 5px;
         }
 
+        .game-menu-right {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        .game-menu-left {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
         .menu-button {
           padding: 5px 10px;
           font-size: 16px;
+        }
+
+        .menu-button-right{
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding-bottom: 5px;
+          margin-top: 85px;
+          margin-left: 15px;
+          max-width: 75px;
+          height: 50px;
+        }
+
+        .menu-button-select-container{
+          display: flex;
+          align-items: center;
+          flex-direction: column;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 50px;
+        }
+
+        .menu-button-left{
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding-bottom: 5px;
+          width: 75px;
+          height: 50px;
+        }
+
+        .menu-button-select{
+          display: flex;
+          align-items: center;
+          margin-bottom: 13px;
+          justify-content: center;
+          padding: 2px;
+          width: 75px;
+          height: 50px;
         }
 
         .mobile-controls {
@@ -266,6 +345,7 @@
       /* Landscape Mode */
       @media (max-height: 500px) and (orientation: landscape) {
         .character-controls {
+          
           bottom: 5px;
         }
 
@@ -295,23 +375,79 @@
 
         <!-- Game Menu -->
         <div class="game-menu">
-          <button class="menu-button" id="back-to-game-button">BACK TO GAME</button>
-          <button class="menu-button" id="character-select-button">SELECT CHARACTER</button>
-          <button class="menu-button" id="ranking-button">RANKING</button>
-          <button class="menu-button" id="easy-mode-button">EASY MODE</button>
-          <button class="menu-button" id="main-menu-button">MAIN MENU</button>
-        </div>
-
-        <!-- Character Selection Controls -->
-        <div class="character-controls">
-          <button class="mobile-button" id="char-left-button">←</button>
-          <button class="mobile-button" id="char-select-button">SELECT</button>
-          <button class="mobile-button" id="char-right-button">→</button>
+          <div class="game-menu-left">
+            <button class="menu-button" id="back-to-game-button">BACK TO GAME</button>
+            <button class="menu-button" id="character-select-button">SELECT CHARACTER</button>
+            <div class="menu-button-select-container">
+              <button class="menu-button-select" id="char-select-button">SELECT</button>
+              <button class="menu-button-left" id="char-left-button">←</button>
+            </div>
+          </div>
+          <div class="game-menu-right">
+            <button class="menu-button" id="ranking-button">RANKING</button>
+            <button class="menu-button" id="easy-mode-button">EASY MODE</button>
+            <button class="menu-button" id="main-menu-button">MAIN MENU</button>
+            <button class="menu-button-right" id="char-right-button">→</button>
+          </div>
         </div>
 
         <!-- Jump Button -->
         <button class="jump-button" id="jump-button">↑</button>
       </div>
     </div>
+    
+    <script>
+      // Mobile detection script - runs after body is loaded
+      (function() {
+        function detectMobile() {
+          const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+          
+          // Check for mobile user agents
+          const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+          const isMobileUserAgent = mobileRegex.test(userAgent);
+          
+          // Check for touch capability
+          const hasTouch = ('ontouchstart' in window) || 
+                          (navigator.maxTouchPoints > 0) || 
+                          (navigator.msMaxTouchPoints > 0);
+          
+          // Check screen size
+          const isMobileScreen = window.innerWidth <= 1024;
+          
+          // Consider it mobile if:
+          // 1. User agent says it's mobile OR
+          // 2. Has touch capability AND screen is small/medium
+          return isMobileUserAgent || (hasTouch && isMobileScreen);
+        }
+        
+        // Apply class to body based on detection
+        if (detectMobile()) {
+          document.body.classList.add('is-mobile');
+          console.log('Mobile device detected - UI enabled');
+        } else {
+          document.body.classList.remove('is-mobile');
+          console.log('Desktop device detected - UI disabled');
+        }
+        
+        // Store the result globally for the game to use
+        window.IS_MOBILE_DEVICE = detectMobile();
+        
+        // Re-check on resize (for responsive testing)
+        window.addEventListener('resize', function() {
+          const wasMobile = document.body.classList.contains('is-mobile');
+          const isMobile = detectMobile();
+          
+          if (wasMobile !== isMobile) {
+            if (isMobile) {
+              document.body.classList.add('is-mobile');
+            } else {
+              document.body.classList.remove('is-mobile');
+            }
+            window.IS_MOBILE_DEVICE = isMobile;
+            console.log(`Device type changed to: ${isMobile ? 'mobile' : 'desktop'}`);
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

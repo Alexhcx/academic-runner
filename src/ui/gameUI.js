@@ -2,8 +2,21 @@ import k from "../kaplayCtx";
 
 class GameUI {
   constructor() {
+    // Usa a detecção global do HTML
+    this.isMobile = window.IS_MOBILE_DEVICE || false;
+    console.log(`GameUI initialized - Mobile: ${this.isMobile}`);
+    
     this.setupUI();
     this.setupOrientationHandling();
+  }
+
+  detectMobile() {
+    // Usa a detecção global definida no HTML
+    return window.IS_MOBILE_DEVICE || false;
+  }
+
+  updateVisibilityForDevice() {
+    // Não precisa mais fazer nada aqui, o CSS cuida disso
   }
 
   setupOrientationHandling() {
@@ -27,6 +40,9 @@ class GameUI {
   }
 
   setupUI() {
+    // Sempre faz o setup, pois o CSS controla a visibilidade
+    console.log("Configurando UI...");
+
     // Jump Button
     const jumpButton = document.getElementById('jump-button');
     if (jumpButton) {
@@ -113,6 +129,11 @@ class GameUI {
         k.setData('easy-mode', !isEasyMode);
         updateEasyModeButton();
         k.play('ring', { volume: 0.5 });
+        
+        // Dispara um evento customizado para notificar o jogo
+        window.dispatchEvent(new CustomEvent('easyModeToggled', { 
+          detail: { isEasyMode: !isEasyMode } 
+        }));
       });
 
       updateEasyModeButton();
@@ -211,6 +232,11 @@ class GameUI {
           if (charSelectButton) charSelectButton.style.display = 'none';
         }
       }
+      
+      // Jump button visibility - sempre visível agora
+      if (jumpButton) {
+        jumpButton.style.display = 'flex';
+      }
     };
 
     // Update visibility when scene changes
@@ -223,11 +249,8 @@ class GameUI {
   }
 
   show() {
-    const uiLayer = document.getElementById('ui-layer');
-    if (uiLayer) {
-      uiLayer.style.display = 'block';
-      this.updateButtonStates();
-    }
+    // Não precisa fazer nada, o CSS controla a visibilidade
+    this.updateButtonStates();
   }
 
   hide() {
@@ -262,4 +285,4 @@ class GameUI {
   }
 }
 
-export const gameUI = new GameUI(); 
+export const gameUI = new GameUI();

@@ -1,291 +1,294 @@
-import k from "../../kaplayCtx";
+import k from "../kaplayCtx";
 
-export function makeMobileJumpButton(options = {}) {
-  // Configurações padrão que podem ser sobrescritas
-  const config = {
-    // Posição
-    pos: options.pos || { x: 120, y: k.height() - 120 },
+class GameUI {
+  constructor() {
+    // Usa a detecção global do HTML
+    this.isMobile = window.IS_MOBILE_DEVICE || false;
+    console.log(`GameUI initialized - Mobile: ${this.isMobile}`);
     
-    // Aparência
-    radius: options.radius || 60,
-    bgColor: options.bgColor || [255, 255, 255, 0.2],
-    outlineColor: options.outlineColor || [255, 255, 255, 0.6],
-    outlineWidth: options.outlineWidth || 4,
-    
-    // Texto/Ícone
-    text: options.text || "↑",
-    textSize: options.textSize || 48,
-    textColor: options.textColor || [255, 255, 255, 0.8],
-    font: options.font || "mania",
-    
-    // Z-index
-    zIndex: options.zIndex || 2000,
-    
-    // Som
-    soundEnabled: options.soundEnabled !== undefined ? options.soundEnabled : true,
-    soundName: options.soundName || "ring",
-    soundVolume: options.soundVolume || 0.3,
-    
-    // Comportamento
-    buttonName: options.buttonName || "jump",
-    alwaysVisible: options.alwaysVisible || false,
-    
-    // Callbacks customizados
-    onPress: options.onPress || null,
-    onRelease: options.onRelease || null,
-    
-    // Visual feedback
-    pressedScale: options.pressedScale || 0.9,
-    pressedBgColor: options.pressedBgColor || [255, 255, 255, 0.4],
-    pressedOutlineWidth: options.pressedOutlineWidth || 6,
-    hoverBgColor: options.hoverBgColor || [255, 255, 255, 0.3],
-    hoverOutlineWidth: options.hoverOutlineWidth || 5
-  };
+    this.setupUI();
+    this.setupOrientationHandling();
+  }
 
-  // Estado do botão
-  let isPressed = false;
-  let button = null;
-  let icon = null;
+  detectMobile() {
+    // Usa a detecção global definida no HTML
+    return window.IS_MOBILE_DEVICE || false;
+  }
 
-  // Função melhorada para detectar dispositivos móveis
-  const isMobileDevice = () => {
-    // Verifica se é um dispositivo móvel
-    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Verifica se tem touchscreen
-    const touchCheck = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
-    // Verifica o tamanho da tela (opcional, para tablets pequenos)
-    const screenCheck = window.innerWidth <= 1024;
-    
-    return mobileCheck && (touchCheck || screenCheck);
-  };
+  updateVisibilityForDevice() {
+    // Não precisa mais fazer nada aqui, o CSS cuida disso
+  }
 
-  // Criar o botão visual
-  const create = () => {
-    // Só cria o botão se for dispositivo móvel
-    if (!isMobileDevice() && !config.alwaysVisible) {
-      return null;
+  setupOrientationHandling() {
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        this.updateUIForOrientation();
+      }, 100);
+    });
+
+    window.addEventListener('resize', () => {
+      this.updateUIForOrientation();
+    });
+  }
+
+  updateUIForOrientation() {
+    const uiLayer = document.getElementById('ui-layer');
+    if (!uiLayer) return;
+
+    const isLandscape = window.innerWidth > window.innerHeight;
+    uiLayer.className = isLandscape ? 'landscape' : 'portrait';
+  }
+
+  setupUI() {
+    // Sempre faz o setup, pois o CSS controla a visibilidade
+    console.log("Configurando UI...");
+
+    // Jump Button
+    const jumpButton = document.getElementById('jump-button');
+    if (jumpButton) {
+      jumpButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        k.pressButton('jump');
+      });
+      jumpButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        k.releaseButton('jump');
+      });
+      jumpButton.addEventListener('mousedown', () => k.pressButton('jump'));
+      jumpButton.addEventListener('mouseup', () => k.releaseButton('jump'));
     }
 
-    // Botão principal
-    button = k.add([
-      k.circle(config.radius),
-      k.color(...config.bgColor),
-      k.outline(config.outlineWidth, k.Color.fromArray(config.outlineColor)),
-      k.anchor("center"),
-      k.area(),
-      k.pos(config.pos.x, config.pos.y),
-      k.fixed(),
-      k.z(config.zIndex),
-      "mobileJumpButton"
-    ]);
+    // Music Button
+    const musicButton = document.getElementById('music-button');
+    if (musicButton) {
+      const updateMusicButton = () => {
+        const isMusicEnabled = k.getData('music-enabled') !== false;
+        musicButton.textContent = isMusicEnabled ? '♪' : '♫';
+        musicButton.style.color = isMusicEnabled ? 'white' : '#666';
+      };
 
-    // Adicionar ícone ou texto no botão
-    icon = button.add([
-      k.text(config.text, { font: config.font, size: config.textSize }),
-      k.anchor("center"),
-      k.color(...config.textColor)
-    ]);
+      musicButton.addEventListener('click', () => {
+        const isMusicEnabled = k.getData('music-enabled') !== false;
+        k.setData('music-enabled', !isMusicEnabled);
+        updateMusicButton();
+        
+        if (window.gameSoundtrack) {
+          window.gameSoundtrack.paused = !isMusicEnabled;
+        }
+      });
 
-    // Configurar eventos
-    setupEvents();
+      updateMusicButton();
+    }
 
-    return button;
-  };
+    // Sound Button
+    const soundButton = document.getElementById('sound-button');
+    if (soundButton) {
+      const updateSoundButton = () => {
+        const isSoundEnabled = k.getData('sound-enabled') !== false;
+        soundButton.textContent = isSoundEnabled ? '🔊' : '🔇';
+        soundButton.style.color = isSoundEnabled ? 'white' : '#666';
+      };
 
-  // Configurar todos os eventos do botão
-  const setupEvents = () => {
-    if (!button) return;
+      soundButton.addEventListener('click', () => {
+        const isSoundEnabled = k.getData('sound-enabled') !== false;
+        k.setData('sound-enabled', !isSoundEnabled);
+        updateSoundButton();
+      });
 
-    // Touch events
-    button.onTouchStart(() => {
-      if (!isPressed) {
-        handlePress();
-      }
-    });
+      updateSoundButton();
+    }
 
-    button.onTouchEnd(() => {
-      if (isPressed) {
-        handleRelease();
-      }
-    });
+    // Pause Button
+    const pauseButton = document.getElementById('pause-button');
+    if (pauseButton) {
+      pauseButton.addEventListener('click', () => {
+        k.pressButton('pause');
+      });
+    }
 
-    // Mouse events (para testes em desktop)
-    button.onMousePress(() => {
-      if (!isPressed) {
-        handlePress();
-      }
-    });
+    // Ranking Button
+    const rankingButton = document.getElementById('ranking-button');
+    if (rankingButton) {
+      rankingButton.addEventListener('click', () => {
+        k.play('ring', { volume: 0.5 });
+        k.go('ranking-view');
+      });
+    }
 
-    button.onMouseRelease(() => {
-      if (isPressed) {
-        handleRelease();
-      }
-    });
+    // Easy Mode Button
+    const easyModeButton = document.getElementById('easy-mode-button');
+    if (easyModeButton) {
+      const updateEasyModeButton = () => {
+        const isEasyMode = k.getData('easy-mode') === true;
+        easyModeButton.style.backgroundColor = isEasyMode ? 'rgba(0, 100, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+        easyModeButton.style.borderColor = isEasyMode ? 'rgba(0, 255, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
+      };
 
-    // Hover effects
-    button.onHover(() => {
-      if (!isPressed) {
-        button.color = k.Color.fromArray(config.hoverBgColor);
-        button.outline.width = config.hoverOutlineWidth;
-      }
-    });
+      easyModeButton.addEventListener('click', () => {
+        const isEasyMode = k.getData('easy-mode') === true;
+        k.setData('easy-mode', !isEasyMode);
+        updateEasyModeButton();
+        k.play('ring', { volume: 0.5 });
+        
+        // Dispara um evento customizado para notificar o jogo
+        window.dispatchEvent(new CustomEvent('easyModeToggled', { 
+          detail: { isEasyMode: !isEasyMode } 
+        }));
+      });
 
-    button.onHoverEnd(() => {
-      if (!isPressed) {
-        button.color = k.Color.fromArray(config.bgColor);
-        button.outline.width = config.outlineWidth;
-      }
-    });
+      updateEasyModeButton();
+    }
 
-    // Prevent touch events from propagating to other game elements
-    k.onTouchStart((id, pos) => {
-      if (button && button.exists()) {
-        const dx = pos.x - button.pos.x;
-        const dy = pos.y - button.pos.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance <= config.radius) {
-          return true; // Consume the event
+    // Main Menu Button
+    const mainMenuButton = document.getElementById('main-menu-button');
+    if (mainMenuButton) {
+      mainMenuButton.addEventListener('click', () => {
+        k.play('ring', { volume: 0.5 });
+        k.go('main-menu');
+      });
+    }
+
+    // Back to Game Button
+    const backToGameButton = document.getElementById('back-to-game-button');
+    if (backToGameButton) {
+      backToGameButton.addEventListener('click', () => {
+        k.play('ring', { volume: 0.5 });
+        k.go('game');
+      });
+
+      // Show/hide based on current scene
+      const updateBackToGameVisibility = () => {
+        const currentScene = k.getData('current-scene');
+        backToGameButton.style.display = currentScene === 'game' ? 'none' : 'block';
+      };
+
+      // Update visibility when scene changes
+      k.on('sceneEnter', () => {
+        k.setData('current-scene', k.getData('current-scene'));
+        updateBackToGameVisibility();
+      });
+
+      // Initial visibility
+      updateBackToGameVisibility();
+    }
+
+    // Character Select Button (always visible)
+    const characterSelectButton = document.getElementById('character-select-button');
+    if (characterSelectButton) {
+      characterSelectButton.addEventListener('click', () => {
+        k.play('ring', { volume: 0.5 });
+        k.go('character-select');
+      });
+    }
+
+    // Character Selection Buttons (only visible in character select scene)
+    const charLeftButton = document.getElementById('char-left-button');
+    const charRightButton = document.getElementById('char-right-button');
+    const charSelectButton = document.getElementById('char-select-button');
+
+    if (charLeftButton) {
+      charLeftButton.addEventListener('click', () => {
+        k.play('ring', { volume: 0.5 });
+        // Simulate left arrow key press
+        const leftEvent = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
+        window.dispatchEvent(leftEvent);
+      });
+    }
+
+    if (charRightButton) {
+      charRightButton.addEventListener('click', () => {
+        k.play('ring', { volume: 0.5 });
+        // Simulate right arrow key press
+        const rightEvent = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+        window.dispatchEvent(rightEvent);
+      });
+    }
+
+    if (charSelectButton) {
+      charSelectButton.addEventListener('click', () => {
+        k.play('jump', { volume: 0.5 });
+        // Simulate space key press for character selection
+        const spaceEvent = new KeyboardEvent('keydown', { key: ' ' });
+        window.dispatchEvent(spaceEvent);
+      });
+    }
+
+    // Update button visibility based on scene
+    const updateButtonVisibility = () => {
+      const currentScene = k.getData('current-scene');
+      
+      // Character selection buttons only in character select scene
+      const characterControls = document.querySelector('.character-controls');
+      if (characterControls) {
+        if (currentScene === 'character-select') {
+          characterControls.style.display = 'flex';
+          if (charLeftButton) charLeftButton.style.display = 'flex';
+          if (charRightButton) charRightButton.style.display = 'flex';
+          if (charSelectButton) charSelectButton.style.display = 'flex';
+        } else {
+          characterControls.style.display = 'none';
+          if (charLeftButton) charLeftButton.style.display = 'none';
+          if (charRightButton) charRightButton.style.display = 'none';
+          if (charSelectButton) charSelectButton.style.display = 'none';
         }
       }
+      
+      // Jump button visibility - sempre visível agora
+      if (jumpButton) {
+        jumpButton.style.display = 'flex';
+      }
+    };
+
+    // Update visibility when scene changes
+    k.onSceneEnter((sceneName) => {
+      k.setData('current-scene', sceneName);
+      updateButtonVisibility();
     });
 
-    k.onTouchEnd((id, pos) => {
-      if (button && button.exists()) {
-        const dx = pos.x - button.pos.x;
-        const dy = pos.y - button.pos.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance <= config.radius) {
-          return true; // Consume the event
-        }
-      }
+    // Também escuta eventos customizados de mudança de cena
+    window.addEventListener('sceneChanged', () => {
+      updateButtonVisibility();
     });
-  };
 
-  // Lógica de pressionar o botão
-  const handlePress = () => {
-    if (!button) return;
-    
-    isPressed = true;
-    
-    // Visual feedback
-    button.color = k.Color.fromArray(config.pressedBgColor);
-    button.scale = k.vec2(config.pressedScale);
-    button.outline.width = config.pressedOutlineWidth;
-    
-    // Som de feedback
-    if (config.soundEnabled && k.get("soundButton")[0]) {
-      k.play(config.soundName, { volume: config.soundVolume });
+    // Initial visibility
+    updateButtonVisibility();
+  }
+
+  show() {
+    // Não precisa fazer nada, o CSS controla a visibilidade
+    this.updateButtonStates();
+  }
+
+  hide() {
+    // Don't hide the UI layer, just update button states
+    this.updateButtonStates();
+  }
+
+  updateButtonStates() {
+    // Update music button
+    const musicButton = document.getElementById('music-button');
+    if (musicButton) {
+      const isMusicEnabled = k.getData('music-enabled') !== false;
+      musicButton.textContent = isMusicEnabled ? '♪' : '♫';
+      musicButton.style.color = isMusicEnabled ? 'white' : '#666';
     }
-    
-    // Acionar o botão virtual
-    k.pressButton(config.buttonName);
-    
-    // Callback customizado
-    if (config.onPress) {
-      config.onPress();
+
+    // Update sound button
+    const soundButton = document.getElementById('sound-button');
+    if (soundButton) {
+      const isSoundEnabled = k.getData('sound-enabled') !== false;
+      soundButton.textContent = isSoundEnabled ? '🔊' : '🔇';
+      soundButton.style.color = isSoundEnabled ? 'white' : '#666';
     }
-  };
 
-  // Lógica de soltar o botão
-  const handleRelease = () => {
-    if (!button) return;
-    
-    isPressed = false;
-    
-    // Restaurar visual
-    button.color = k.Color.fromArray(config.bgColor);
-    button.scale = k.vec2(1);
-    button.outline.width = config.outlineWidth;
-    
-    // Soltar o botão virtual
-    k.releaseButton(config.buttonName);
-    
-    // Callback customizado
-    if (config.onRelease) {
-      config.onRelease();
+    // Update easy mode button
+    const easyModeButton = document.getElementById('easy-mode-button');
+    if (easyModeButton) {
+      const isEasyMode = k.getData('easy-mode') === true;
+      easyModeButton.style.backgroundColor = isEasyMode ? 'rgba(0, 100, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+      easyModeButton.style.borderColor = isEasyMode ? 'rgba(0, 255, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
     }
-  };
-
-  // Métodos públicos
-  const show = () => {
-    if (button && button.exists()) {
-      button.opacity = 1;
-      button.area.scale = k.vec2(1);
-    }
-  };
-
-  const hide = () => {
-    if (button && button.exists()) {
-      button.opacity = 0;
-      button.area.scale = k.vec2(0);
-    }
-  };
-
-  const destroy = () => {
-    if (button && button.exists()) {
-      k.destroy(button);
-    }
-  };
-
-  const setPosition = (x, y) => {
-    if (button && button.exists()) {
-      button.pos.x = x;
-      button.pos.y = y;
-    }
-  };
-
-  const setScale = (scale) => {
-    if (button && button.exists() && !isPressed) {
-      button.scale = k.vec2(scale);
-    }
-  };
-
-  const setText = (newText) => {
-    if (icon && icon.exists()) {
-      icon.text = newText;
-    }
-  };
-
-  const setColor = (bgColor, outlineColor) => {
-    if (button && button.exists()) {
-      if (bgColor) {
-        config.bgColor = bgColor;
-        if (!isPressed) {
-          button.color = k.Color.fromArray(bgColor);
-        }
-      }
-      if (outlineColor) {
-        config.outlineColor = outlineColor;
-        button.outline.color = k.Color.fromArray(outlineColor);
-      }
-    }
-  };
-
-  const isButtonPressed = () => isPressed;
-
-  const getButton = () => button;
-
-  // Criar o botão automaticamente
-  create();
-
-  // Retornar API pública
-  return {
-    show,
-    hide,
-    destroy,
-    setPosition,
-    setScale,
-    setText,
-    setColor,
-    isPressed: isButtonPressed,
-    getButton,
-    // Recriar o botão com novas opções
-    recreate: (newOptions) => {
-      destroy();
-      Object.assign(config, newOptions);
-      create();
-    }
-  };
+  }
 }
+
+export const gameUI = new GameUI();
